@@ -46,7 +46,9 @@
     "dependencies": {
         "acorn": "^8.15.0",
         "acorn-walk": "^8.3.4",
-        "globals": "^16.3.0"
+        "globals": "^16.3.0",
+        "lodash": "^4.17.21",
+        "recast": "^0.23.11"
     },
     "repository": {
         "type": "git",

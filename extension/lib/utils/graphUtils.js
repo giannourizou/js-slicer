@@ -30,8 +30,8 @@ class Graph {
         let pathList = [];
 
         pathList.push(s);
-
-        return this.getAllPathsUtil(s, d, isVisited, pathList);
+        this.getAllPathsUtil(s, d, isVisited, pathList);
+        return this._pathTopology;
     }
 
     getAllPathsUtil = (u,d,isVisited,localPathList) => {

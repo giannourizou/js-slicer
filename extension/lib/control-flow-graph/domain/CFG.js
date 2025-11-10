@@ -6,6 +6,7 @@ const AssignmentStatement = require("../../code-parser-module/domain/AssignmentS
 const VariableDeclaration = require("../../code-parser-module/domain/VariableDeclaration");
 const DDGEdge = require("../../data-dependence-graph/domain/DDGEdge");
 const _ = require("lodash");
+
 class CFG {
     constructor(nodes) {
         if (nodes) {
@@ -54,6 +55,11 @@ class CFG {
         return node.isExitNode();
     }
 
+    getExitNode() {
+        return this._nodes.find(node => node.isExitNode());
+    }
+
+
     getNodeById(id) {
         let result = this.nodes.filter((n) => n.id === id);
         if (result) {
@@ -79,57 +85,54 @@ class CFG {
         this._nodes = value;
     }
 
-    getForwardDominanceTree() {
+    getForwardDominanceTree() { 
+        let dominatorsMap = this.getNodesImmediateDominators();      
         let fdtNodes = this._nodes.map((node) => {
-            return new FDTNode(node.id, null, node._statement, this.getFDTNodeEdges(node));
-        });
+        return new FDTNode(node._id, null, node._statement, this.getFDTNodeEdges(node, dominatorsMap))});
         return new FDT(fdtNodes);
     }
+
 
     getNodesImmediateDominators() {
         let immediateDomMap = {};
         this._nodes.forEach((node) => {
-            let nodeDominants = [];
-            let remainingCFGNodes = this._nodes.filter((rNode) => rNode._id !== node._id);
-            remainingCFGNodes.forEach((rNode) => {
-                //Y forward dominates X if all paths from X include Y
-                let nodeTopology = this.getAllCFGPaths().filter((topology) => topology._source === node._id);
-                let allNodePathsFromX = nodeTopology.flatMap((t) => t._paths);
+            let exitNode = this.getExitNode();
+            pathsToExit = this.getPathsToExit(node._id, exitNode._id);
 
-                if (rNode.dominatesNode(allNodePathsFromX, node)) {
-                    nodeDominants.push(rNode);
+            // Node X dominates node Y, if every path from Y to EXIT passes through X
+            let nodeDominants = [];
+            let rest = this._nodes.filter((n) => n._id !== node._id);
+            rest.forEach((node) => {
+                if (pathsToExit.every(path => path.includes(node._id))) {
+                    nodeDominants.push(node);
                 }
             });
 
-            let immediateNodeDominator = nodeDominants.find((nd) => {
-                let restDominants = nodeDominants.filter((elem) => elem._id !== nd._id);
-                return restDominants.every((rd) => {
-                    let nodeTopology = this.getAllCFGPaths().filter((topology) => topology._source === rd._id);
-                    let allNodePathsFromX = nodeTopology.flatMap((t) => t._paths);
-
-                    return rd.dominatesNode(allNodePathsFromX, nd);
+            // For each dominator (dom), 
+            // Check if all the rest dominators (rdom) appear after (>) dom on every path
+            let immediateDomNode = nodeDominants.find((dom) => {
+                let restDoms = nodeDominants.filter((n) => n._id !== dom._id);
+                return restDoms.every((rdom) => {
+                    return pathsToExit.every(path => {
+                        return path.indexOf(rdom._id) > path.indexOf(dom._id);
+                    });
                 });
             });
 
-            immediateDomMap[node._id] = immediateNodeDominator ? immediateNodeDominator._id : 0;
+            immediateDomMap[node._id] = immediateDomNode ? immediateDomNode._id : 0;
         });
 
         return immediateDomMap;
     }
-    getFDTNodeEdges(cfgNode) {
-        let dominatorsMap = this.getNodesImmediateDominators();
 
+    getFDTNodeEdges(cfgNode, dominatorsMap) {
         let fdtEdges = [];
         for (const key in dominatorsMap) {
             if (dominatorsMap[key] === cfgNode._id) {
                 fdtEdges.push(new FDTEdge(cfgNode.id, parseInt(key)));
             }
         }
-        // let cfgNodes = this._nodes.filter(node => {
-        //     return node._edges.find(edge =>  edge._target === cfgNode.id);
-        // });
-
-        return fdtEdges; //cfgNodes.map(node =>   new FDTEdge(cfgNode.id,node.id));
+        return fdtEdges;
     }
 
     getAllEdges() {
@@ -141,6 +144,24 @@ class CFG {
     getAllCFGPaths() {
         return new Graph(this._nodes.length).getCFGPaths(this);
     }
+    
+    getPathsToExit(startID, exitID, visited = new Set()){
+        if (startID === exitID) return [[exitID]];
+        if (visited.has(startID)) return [];
+
+        let allPathsToExit = [];
+        let startNode = this.getNodeById(startID);
+        visited.add(startID);
+
+        startNode._edges.forEach((e) => {
+            let pathsToExit = this.getPathsToExit(e._targetId, exitID, new Set(visited));
+            pathsToExit.map((path) => {
+                allPathsToExit.push([startID].concat(path))
+            });
+        })
+        return allPathsToExit;
+    }
+    
 
     getNodeById(id) {
         return this._nodes.find((node) => node._id === id);
@@ -233,4 +254,5 @@ class CFG {
         return variableDependencyList.length ? variableDependencyList : [];
     }
 }
+
 module.exports = CFG;

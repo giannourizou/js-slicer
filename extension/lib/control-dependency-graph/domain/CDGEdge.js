@@ -1,4 +1,5 @@
 class CDGEdge {
+    
     constructor(source, target, condition) {
         this._source = source;
         this._target = target;

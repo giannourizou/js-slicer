@@ -1,10 +1,10 @@
 class CDGNode{
+
     constructor(id, statement, edges) {
         this._id = id;
         this._statement = statement;
         this._edges = edges;
     }
-
 
     get id() {
         return this._id;
@@ -28,6 +28,14 @@ class CDGNode{
 
     set edges(value) {
         this._edges = value;
+    }
+
+    hasEdgeTo(targetNodeId) {
+         let result = this.edges.filter((e) => e.target === targetNodeId);
+        if (result && result.length > 0) {
+            return true;
+        }
+        return false;
     }
 }
 
