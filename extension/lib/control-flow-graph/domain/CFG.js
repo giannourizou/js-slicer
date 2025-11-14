@@ -97,7 +97,7 @@ class CFG {
         let immediateDomMap = {};
         this._nodes.forEach((node) => {
             let exitNode = this.getExitNode();
-            pathsToExit = this.getPathsToExit(node._id, exitNode._id);
+            pathsToExit = this.getPathsToNode(node._id, exitNode._id);
 
             // Node X dominates node Y, if every path from Y to EXIT passes through X
             let nodeDominants = [];
@@ -145,7 +145,7 @@ class CFG {
         return new Graph(this._nodes.length).getCFGPaths(this);
     }
     
-    getPathsToExit(startID, exitID, visited = new Set()){
+    getPathsToNode(startID, exitID, visited = new Set()){
         if (startID === exitID) return [[exitID]];
         if (visited.has(startID)) return [];
 
@@ -154,24 +154,42 @@ class CFG {
         visited.add(startID);
 
         startNode._edges.forEach((e) => {
-            let pathsToExit = this.getPathsToExit(e._targetId, exitID, new Set(visited));
+            let pathsToExit = this.getPathsToNode(e._targetId, exitID, new Set(visited));
             pathsToExit.map((path) => {
                 allPathsToExit.push([startID].concat(path))
             });
         })
         return allPathsToExit;
     }
-    
 
     getNodeById(id) {
         return this._nodes.find((node) => node._id === id);
     }
+    
+    getTopologies() {
+        return this._nodes.flatMap((source) => 
+            this._nodes
+                .filter((target) => target._id !== source._id)
+                .map((target) => {
+                    let paths = this.getPathsToNode(source._id, target._id);
+                    return {
+                        _source: source._id,
+                        _target: target._id,
+                        _paths: paths   
+                    };
+                })
+                .filter((topology) => topology._paths.length > 0)
+        );
+    }
+
 
     getDataDependencyEdgesForNode(fromNode) {
         let ddgEdges = [];
-        this.getAllCFGPaths()
+
+        this.getTopologies()
             .filter((topology) => topology._source === fromNode._id)
             .forEach((topology) => {
+                /*
                 this.getVariableDependency(fromNode, this.getNodeById(topology._target), topology._paths).forEach((vd) => {
                     //Add DDGEdge if it does not exist already
                     if (
@@ -182,6 +200,7 @@ class CFG {
                         ddgEdges.push(new DDGEdge(fromNode._id, topology._target, vd));
                     }
                 });
+                */
                 // topology._paths.forEach(path => {
                 //     this.getVariableDependency(fromNode,this.getNodeById(topology._target),path).forEach(vd => {
                 //

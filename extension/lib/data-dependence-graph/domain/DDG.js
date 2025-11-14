@@ -16,7 +16,7 @@ class DDG {
         return this._nodes.find(node => node._id === nodeId);
     }
 
-     hasEdge(from, to) {
+    hasEdge(from, to) {
         let fromNode = this.getNodeById(from);
         if (!fromNode) {
             return false;

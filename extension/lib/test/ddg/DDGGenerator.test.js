@@ -33,7 +33,7 @@ it("throws error when CFG is missing", () => {
     }).toThrow("Missing required param.");
 });
 
-/*
+
 it("DDG1", () => {
     let code = `
     function foo(){
@@ -53,11 +53,10 @@ it("DDG1", () => {
     ddg._nodes.forEach((node) => {
         const cfgNode = cfg._nodes.find(n => n._id === node.id);
         const stmt = cfgNode?._statement;
-        console.log( `Node ${node.id} → children: [${node._edges.map(e => e.target).join(", ")}]Statement: ${typeof stmt === "string" ? stmt : JSON.stringify(stmt)}`);
+        //console.log( `Node ${node.id} → children: [${node._edges.map(e => e.target).join(", ")}]Statement: ${typeof stmt === "string" ? stmt : JSON.stringify(stmt)}`);
     });
 
     //expectHasEdge(ddg,1,2);
     //expectHasEdge(ddg,2,3);
 });
 
-*/
