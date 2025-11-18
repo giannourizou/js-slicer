@@ -34,12 +34,13 @@ it("throws error when CFG is missing", () => {
 });
 
 
-it("DDG1", () => {
+it("DDG1 - Simple Def-Use", () => {
     let code = `
     function foo(){
-        let a = 1               // 1
-        let b = a + 2           // 2
-        let c = b + a           // 3
+        let a = 1   // 1
+        let b = a   // 2
+        let c = b   // 3
+        let d = b   // 4
     }
     `;
 
@@ -47,16 +48,56 @@ it("DDG1", () => {
     let cfg = CFGGenerator.generateCfg2(functionObj);
     let ddg = DDGGenerator.generateDDG(cfg);
 
-    expect(ddg._nodes.length).toBe(4);
+    expect(ddg._nodes.length).toBe(5);
     
-    console.log("Printed DDG");
-    ddg._nodes.forEach((node) => {
-        const cfgNode = cfg._nodes.find(n => n._id === node.id);
-        const stmt = cfgNode?._statement;
-        //console.log( `Node ${node.id} → children: [${node._edges.map(e => e.target).join(", ")}]Statement: ${typeof stmt === "string" ? stmt : JSON.stringify(stmt)}`);
-    });
-
-    //expectHasEdge(ddg,1,2);
-    //expectHasEdge(ddg,2,3);
+    expectHasEdge(ddg,1,2); // def-use
+    expectHasEdge(ddg,2,3); // def-use
+    expectHasEdge(ddg,2,4); // def-use
 });
 
+
+it("DDG2 - Def-Use & Def-Def Intervening Definition", () =>{
+    let code = `
+    function foo(){
+        let a = 1   // 1
+        let b = 2   // 2
+        b = 10      // 3
+        let c = b   // 4
+    }
+    `;
+
+    let functionObj = parse(code);
+    let cfg = CFGGenerator.generateCfg2(functionObj);
+    let ddg = DDGGenerator.generateDDG(cfg);
+
+    expect(ddg._nodes.length).toBe(5);
+
+    expectHasEdge(ddg, 2, 3);   // def-def
+    expectHasEdge(ddg, 3, 4);   // def-use 
+    expect(ddg.hasEdge(2, 4)).toBe(false);  // no def-use due to intervening definition
+});
+
+
+it("DDG3 - Use-Def with Int", () => {
+    let code = `
+    function foo(){
+        let a = 1   // 1
+        let b = a   // 2
+        a = c + 1   // 3
+        let d = a   // 4
+    }
+    `;
+
+    let functionObj = parse(code);
+    let cfg = CFGGenerator.generateCfg2(functionObj);
+    let ddg = DDGGenerator.generateDDG(cfg);
+
+    expect(ddg._nodes.length).toBe(5);
+
+    expectHasEdge(ddg,1,2); // def-use
+    expectHasEdge(ddg,1,3); // def-def
+    expectHasEdge(ddg,2,3); // use-def
+    expectHasEdge(ddg,3,4); // def-use
+    expect(ddg.hasEdge(1,4)).toBe(false); // no use-def due to intervening definition
+
+});

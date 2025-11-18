@@ -6,6 +6,7 @@ const AssignmentStatement = require("../../code-parser-module/domain/AssignmentS
 const VariableDeclaration = require("../../code-parser-module/domain/VariableDeclaration");
 const DDGEdge = require("../../data-dependence-graph/domain/DDGEdge");
 const _ = require("lodash");
+const Identifier = require("../../code-parser-module/domain/Identifier");
 
 class CFG {
     constructor(nodes) {
@@ -182,14 +183,11 @@ class CFG {
         );
     }
 
-
     getDataDependencyEdgesForNode(fromNode) {
         let ddgEdges = [];
-
         this.getTopologies()
             .filter((topology) => topology._source === fromNode._id)
-            .forEach((topology) => {
-                /*
+            .forEach((topology) => {                
                 this.getVariableDependency(fromNode, this.getNodeById(topology._target), topology._paths).forEach((vd) => {
                     //Add DDGEdge if it does not exist already
                     if (
@@ -200,21 +198,13 @@ class CFG {
                         ddgEdges.push(new DDGEdge(fromNode._id, topology._target, vd));
                     }
                 });
-                */
-                // topology._paths.forEach(path => {
-                //     this.getVariableDependency(fromNode,this.getNodeById(topology._target),path).forEach(vd => {
-                //
-                //         //Add DDGEdge if it does not exist already
-                //         if(!ddgEdges.some(edge => edge._source === fromNode._id && edge._target === topology._target && vd === edge._dependantVariable)){
-                //             ddgEdges.push(new DDGEdge(fromNode._id, topology._target, vd))
-                //         }
-                //     })
-                // })
             });
         return ddgEdges;
     }
 
     getVariableDependency(fromNode, toNode, paths) {
+        if (fromNode._statement == null || toNode._statement == null) return [];
+
         let sourceNodeUsedVars = fromNode._statement.getUsedVariableNames();
         let destNodeUsedVars = toNode._statement.getUsedVariableNames();
 
@@ -227,9 +217,16 @@ class CFG {
                 ? toNode._statement.getDefinedVariable()
                 : undefined;
 
+        if (sourceNodeDeclaredVar) sourceNodeDeclaredVar = sourceNodeDeclaredVar.filter(v => v).map(v => typeof v === 'string' ? v : v._name);
+        if (destNodeDeclaredVar) destNodeDeclaredVar = destNodeDeclaredVar.filter(v => v).map(v => typeof v === 'string'? v : v._name);
+        sourceNodeUsedVars = sourceNodeUsedVars.filter(v => v).map(v => typeof v === 'string'?  v : v._name);
+        destNodeUsedVars = destNodeUsedVars.filter(v => v).map(v => typeof v === 'string'?  v : v._name);
+
         let allVars = _.uniq(sourceNodeUsedVars.concat(destNodeUsedVars));
         if (sourceNodeDeclaredVar) allVars = allVars.concat(sourceNodeDeclaredVar);
         if (destNodeDeclaredVar) allVars = allVars.concat(destNodeDeclaredVar);
+        allVars = _.uniq(allVars);
+        //console.log(allVars);
 
         let variableDependencyList = [];
         /*
@@ -242,10 +239,13 @@ class CFG {
             //     • X contains a definition of v and Y a use of v;
             //     • X contains a use of v and Y a definition of v; or
             //     • X contains a definition of v and Y a definition of v.
-            //                 * */
+            //                 
+        */
+       
         for (let i in allVars) {
             let variable = allVars[i];
             let nodesAreDataDependent = paths.some((path) => {
+                //console.log(`Path:`, path);
                 let remainingNodes = path
                     .filter((nodeId) => nodeId !== fromNode._id && nodeId !== toNode._id)
                     .map((nodeId) => this.getNodeById(nodeId));
@@ -254,19 +254,31 @@ class CFG {
                         rNode._statement instanceof AssignmentStatement || rNode._statement instanceof VariableDeclaration
                             ? rNode._statement.getDefinedVariable()
                             : undefined;
+                    if (rNodeDeclaredVar) rNodeDeclaredVar = rNodeDeclaredVar.filter(v => v).map( v => v._name);
                     return rNodeDeclaredVar && rNodeDeclaredVar.includes(variable);
                 });
 
-                return (
-                    !hasInterveningDefinition &&
-                    ((sourceNodeDeclaredVar && sourceNodeDeclaredVar.includes(variable) && destNodeUsedVars.includes(variable)) ||
-                        (sourceNodeUsedVars.includes(variable) && destNodeDeclaredVar && destNodeDeclaredVar.includes(variable)) ||
-                        (sourceNodeDeclaredVar &&
-                            sourceNodeDeclaredVar.includes(variable) &&
-                            destNodeDeclaredVar &&
-                            destNodeDeclaredVar.includes(variable)))
-                );
+                /*
+                console.log(`\nChecking ${fromNode._id} → ${toNode._id} for variable '${variable}'`);
+                console.log(`All vars`, allVars);
+                console.log(`sourceNodeDeclaredVar:`, sourceNodeDeclaredVar);
+                console.log(`destNodeDeclaredVar:`, destNodeDeclaredVar);
+                console.log(`sourceNodeUsedVars:`, sourceNodeUsedVars);
+                console.log(`destNodeUsedVars:`, destNodeUsedVars);
+                */
+
+                let def_use = sourceNodeDeclaredVar && sourceNodeDeclaredVar.includes(variable) && destNodeUsedVars.includes(variable);
+                let use_def = sourceNodeUsedVars.includes(variable) && destNodeDeclaredVar && destNodeDeclaredVar.includes(variable);
+                let def_def = sourceNodeDeclaredVar && sourceNodeDeclaredVar.includes(variable) && destNodeDeclaredVar && destNodeDeclaredVar.includes(variable);
+
+                console.log(`def_use: ${def_use}, use_def: ${use_def}, def_def: ${def_def}`);
+                console.log(`hasInterveningDefinition: ${hasInterveningDefinition}`);
+
+                return !hasInterveningDefinition && (def_use || use_def || def_def);
             });
+
+            //console.log(`Data dependent? ${nodesAreDataDependent}`);
+
             if (nodesAreDataDependent) variableDependencyList.push(variable);
         }
 

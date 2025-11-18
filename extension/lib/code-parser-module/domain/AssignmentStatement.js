@@ -44,7 +44,7 @@ class AssignmentStatement {
     }
 
     getDefinedVariable() {
-        return this._left._name;
+        return [this._left];
     }
 
     accept(visitor) {
