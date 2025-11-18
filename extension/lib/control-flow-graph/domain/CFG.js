@@ -217,16 +217,16 @@ class CFG {
                 ? toNode._statement.getDefinedVariable()
                 : undefined;
 
-        if (sourceNodeDeclaredVar) sourceNodeDeclaredVar = sourceNodeDeclaredVar.filter(v => v).map(v => typeof v === 'string' ? v : v._name);
-        if (destNodeDeclaredVar) destNodeDeclaredVar = destNodeDeclaredVar.filter(v => v).map(v => typeof v === 'string'? v : v._name);
-        sourceNodeUsedVars = sourceNodeUsedVars.filter(v => v).map(v => typeof v === 'string'?  v : v._name);
-        destNodeUsedVars = destNodeUsedVars.filter(v => v).map(v => typeof v === 'string'?  v : v._name);
-
+        sourceNodeDeclaredVar = sourceNodeDeclaredVar ? sourceNodeDeclaredVar.flatMap(this.extractVarNames) : [];
+        destNodeDeclaredVar = destNodeDeclaredVar ? destNodeDeclaredVar.flatMap(this.extractVarNames) : [];
+        sourceNodeUsedVars = sourceNodeUsedVars ? sourceNodeUsedVars.flatMap(this.extractVarNames) : [];
+        destNodeUsedVars = destNodeUsedVars ? destNodeUsedVars.flatMap(this.extractVarNames) : [];
+        
         let allVars = _.uniq(sourceNodeUsedVars.concat(destNodeUsedVars));
         if (sourceNodeDeclaredVar) allVars = allVars.concat(sourceNodeDeclaredVar);
         if (destNodeDeclaredVar) allVars = allVars.concat(destNodeDeclaredVar);
         allVars = _.uniq(allVars);
-        //console.log(allVars);
+        console.log(`All vars:`, allVars);
 
         let variableDependencyList = [];
         /*
@@ -258,21 +258,21 @@ class CFG {
                     return rNodeDeclaredVar && rNodeDeclaredVar.includes(variable);
                 });
 
-                /*
+                
                 console.log(`\nChecking ${fromNode._id} → ${toNode._id} for variable '${variable}'`);
-                console.log(`All vars`, allVars);
-                console.log(`sourceNodeDeclaredVar:`, sourceNodeDeclaredVar);
-                console.log(`destNodeDeclaredVar:`, destNodeDeclaredVar);
-                console.log(`sourceNodeUsedVars:`, sourceNodeUsedVars);
-                console.log(`destNodeUsedVars:`, destNodeUsedVars);
-                */
+                //console.log(`All vars`, allVars);
+                //console.log(`sourceNodeDeclaredVar:`, sourceNodeDeclaredVar);
+                //console.log(`destNodeDeclaredVar:`, destNodeDeclaredVar);
+                //console.log(`sourceNodeUsedVars:`, sourceNodeUsedVars);
+                //console.log(`destNodeUsedVars:`, destNodeUsedVars);
+                
 
                 let def_use = sourceNodeDeclaredVar && sourceNodeDeclaredVar.includes(variable) && destNodeUsedVars.includes(variable);
                 let use_def = sourceNodeUsedVars.includes(variable) && destNodeDeclaredVar && destNodeDeclaredVar.includes(variable);
                 let def_def = sourceNodeDeclaredVar && sourceNodeDeclaredVar.includes(variable) && destNodeDeclaredVar && destNodeDeclaredVar.includes(variable);
 
                 console.log(`def_use: ${def_use}, use_def: ${use_def}, def_def: ${def_def}`);
-                console.log(`hasInterveningDefinition: ${hasInterveningDefinition}`);
+                //console.log(`hasInterveningDefinition: ${hasInterveningDefinition}`);
 
                 return !hasInterveningDefinition && (def_use || use_def || def_def);
             });
@@ -283,6 +283,19 @@ class CFG {
         }
 
         return variableDependencyList.length ? variableDependencyList : [];
+    }
+
+
+    extractVarNames = (item) => {
+        if (!item) return [];
+        if (typeof item === 'string') return [item];
+        if (item instanceof Identifier) return [item._name];
+
+        // Binary Expression
+        names = [];
+        if (item._left) names = names.concat(this.extractVarNames(item._left));
+        if (item._right) names = names.concat(this.extractVarNames(item._right));
+        return names;
     }
 }
 

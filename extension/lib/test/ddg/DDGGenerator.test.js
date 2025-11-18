@@ -78,7 +78,7 @@ it("DDG2 - Def-Use & Def-Def Intervening Definition", () =>{
 });
 
 
-it("DDG3 - Use-Def with Int", () => {
+it("DDG3 - Use-Def & Intervening Definition", () => {
     let code = `
     function foo(){
         let a = 1   // 1
@@ -99,5 +99,30 @@ it("DDG3 - Use-Def with Int", () => {
     expectHasEdge(ddg,2,3); // use-def
     expectHasEdge(ddg,3,4); // def-use
     expect(ddg.hasEdge(1,4)).toBe(false); // no use-def due to intervening definition
+});
+
+
+it("DDG 4 - Assignment Statement with 2+ variables", () => {
+    let code = `
+    function foo(){
+        let a = 1               // 1
+        let b = a               // 2
+        let c = b + a + 6       // 3
+        b = a + b - c + 6       // 4
+    }
+    `;
+
+    let functionObj = parse(code);
+    let cfg = CFGGenerator.generateCfg2(functionObj);
+    let ddg = DDGGenerator.generateDDG(cfg);
+
+    expect(ddg._nodes.length).toBe(5);
+
+    expectHasEdge(ddg,1,2); // def-use
+    expectHasEdge(ddg,1,3); // def-use
+    expectHasEdge(ddg,1,4); // def-use  
+    expectHasEdge(ddg,2,3); // def-use
+    expectHasEdge(ddg,2,4); // def-use & def-def
+    expectHasEdge(ddg,3,4); // def-use
 
 });
