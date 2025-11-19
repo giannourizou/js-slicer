@@ -221,3 +221,41 @@ it("DDG7 - Switch & Break Statement ", () => {
     expectHasEdge(ddg,2,8); // def-use (b)
     
 })
+
+it("DDG8 - While Loop & Continue Statement", () => {
+    let code = `
+    function foo(){
+        let x = 0;              //1
+        let sum = 0;            //2
+        while(x < 10){          //3
+            x = x + 1;          //4
+            if(x % 2 == 0){     //5
+                continue;       //6
+            }
+            sum = sum + x;      //7
+        }
+        let avg = sum / 10;     //8
+    }
+    `;
+
+    let functionObj = parse(code);
+    let cfg = CFGGenerator.generateCfg2(functionObj);
+    let ddg = DDGGenerator.generateDDG(cfg);
+
+    expect(ddg._nodes.length).toBe(9);
+
+    expectHasEdge(ddg,1,3); // def-use (x)
+    expectHasEdge(ddg,1,4); // def-def & def-use (x)
+    expectHasEdge(ddg,2,7); // def-def & def-use (sum)
+    expectHasEdge(ddg,2,8); // def-use (sum)
+    expectHasEdge(ddg,3,4); // use-def (x)
+    expectHasEdge(ddg,4,3); // def-use (x)
+    expectHasEdge(ddg,4,4); // def-use & use-def & def-def (x)
+    expectHasEdge(ddg,4,5); // def-use (x)
+    expectHasEdge(ddg,4,7); // def-use (x)
+    expectHasEdge(ddg,5,4); // use-def (x)
+    expectHasEdge(ddg,7,4); // use-def (x)
+    expectHasEdge(ddg,7,7); // def-use & use-def & def-def (sum)
+    expectHasEdge(ddg,7,8); // def-use (sum)
+    
+})

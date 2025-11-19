@@ -15,6 +15,14 @@ class ContinueStatement {
         visitor.visitContinueStatement(this);
     }
 
+    getUsedVariableNames() {
+        return [];  
+    }
+
+    getDefinedVariable() {
+        return []; 
+    }
+
     asText() {
         return "continue";
     }

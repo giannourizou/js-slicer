@@ -353,3 +353,41 @@ it("CDG with break and nested for loops", () => {
     expectHasEdge(cdg, 11, 13); // "else" body
 
 });
+
+it("CDG with Switch & Break Statement ", () => {
+    let code = `
+    function foo(){
+    let a = 1;          //1
+    let b = 4;          //2
+    switch(a) {         //3
+        case 1:         
+            b = a;      //4
+            break;      //5
+        case 2:         
+            let c = a;  //6
+            break;      //7
+        default:        
+            let d = b + a;  // 8
+        }
+    }
+    `;
+
+    let functionObj = parse(code);
+    let cfg = CFGGenerator.generateCfg2(functionObj);
+    let cdg = CDGGenerator.generateCDG(cfg);
+    let entryNode = cdg._nodes.find(n => n._id === CDGNodeNames.ENTRY);
+ 
+    expect(cdg._nodes.length).toBe(10);
+
+    expectHasEdge(cdg, entryNode._id, 1);
+    expectHasEdge(cdg, entryNode._id, 2);
+    expectHasEdge(cdg, entryNode._id, 3);
+    expectHasEdge(cdg, entryNode._id, 9);
+
+    expectHasEdge(cdg, 3, 4); // case 1
+    expectHasEdge(cdg, 3, 5); // case 1
+    expectHasEdge(cdg, 3, 6); // case 2
+    expectHasEdge(cdg, 3, 7); // case 2
+    expectHasEdge(cdg, 3, 8); // default case
+
+});

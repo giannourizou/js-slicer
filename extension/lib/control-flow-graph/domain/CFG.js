@@ -99,7 +99,7 @@ class CFG {
         let immediateDomMap = {};
         this._nodes.forEach((node) => {
             let exitNode = this.getExitNode();
-            pathsToExit = this.getPathsToNode(node._id, exitNode._id);
+            pathsToExit = this.FDTgetPathsToNode(node._id, exitNode._id);
 
             // Node X dominates node Y, if every path from Y to EXIT passes through X
             let nodeDominants = [];
@@ -147,8 +147,27 @@ class CFG {
         return new Graph(this._nodes.length).getCFGPaths(this);
     }
     
-     getNodeById(id) {
+    getNodeById(id) {
         return this._nodes.find((node) => node._id === id);
+    }
+
+    // Temporary solution
+    // condition visited.size > 0 creates infinite loop for cdg generation
+    FDTgetPathsToNode(startID, exitID, visited = new Set()){
+        if (startID === exitID) return [[exitID]];
+        if (visited.has(startID)) return [];
+
+        let allPathsToNode = [];
+        let startNode = this.getNodeById(startID);
+        visited.add(startID);
+
+        startNode._edges.forEach((e) => {
+            let pathsToExit = this.getPathsToNode(e._targetId, exitID, new Set(visited));
+            pathsToExit.map((path) => {
+                allPathsToNode.push([startID].concat(path))
+            });
+        })
+        return allPathsToNode;
     }
 
     getPathsToNode(startID, exitID, visited = new Set()){
@@ -269,7 +288,7 @@ class CFG {
                     return rNodeDeclaredVar && rNodeDeclaredVar.includes(variable);
                 });
 
-                
+
                 console.log(`\nChecking ${fromNode._id} → ${toNode._id} for variable '${variable}'`);
                 //console.log(`All vars`, allVars);
                 //console.log(`sourceNodeDeclaredVar:`, sourceNodeDeclaredVar);
