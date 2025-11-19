@@ -211,6 +211,11 @@ class CFG {
     getVariableDependency(fromNode, toNode, paths) {
         if (fromNode._statement == null || toNode._statement == null) return [];
 
+        /* // Debug/Check constructors
+        console.log(`fromNode statement:`, fromNode._statement?.constructor?.name);
+        console.log(`toNode statement:`, toNode._statement?.constructor?.name);
+        */
+
         let sourceNodeUsedVars = fromNode._statement.getUsedVariableNames();
         let destNodeUsedVars = toNode._statement.getUsedVariableNames();
 
@@ -276,7 +281,7 @@ class CFG {
                 let use_def = sourceNodeUsedVars.includes(variable) && destNodeDeclaredVar && destNodeDeclaredVar.includes(variable);
                 let def_def = sourceNodeDeclaredVar && sourceNodeDeclaredVar.includes(variable) && destNodeDeclaredVar && destNodeDeclaredVar.includes(variable);
 
-                console.log(`def_use: ${def_use}, use_def: ${use_def}, def_def: ${def_def}`);
+                //console.log(`def_use: ${def_use}, use_def: ${use_def}, def_def: ${def_def}`);
                 //console.log(`hasInterveningDefinition: ${hasInterveningDefinition}`);
 
                 return !hasInterveningDefinition && (def_use || use_def || def_def);

@@ -33,7 +33,6 @@ it("throws error when CFG is missing", () => {
     }).toThrow("Missing required param.");
 });
 
-/*
 it("DDG1 - Simple Def-Use", () => {
     let code = `
     function foo(){
@@ -158,8 +157,6 @@ it("DDG5 - If/Else Statement", () =>{
 
 });
 
-*/
-
 it("DDG6 - For Loop Statement", () =>{
     let code = `
     function foo(){
@@ -191,3 +188,36 @@ it("DDG6 - For Loop Statement", () =>{
     expectHasEdge(ddg,5,5); // def-def & def-use & use-def (i)
 
 });
+
+it("DDG7 - Switch & Break Statement ", () => {
+    let code = `
+    function foo(){
+    let a = 1;          //1
+    let b = 4;          //2
+    switch(a) {         //3
+        case 1:         
+            b = a;      //4
+            break;      //5
+        case 2:         
+            let c = a;  //6
+            break;      //7
+        default:        
+            let d = b + a;  // 8
+        }
+    }
+    `;
+
+    let functionObj = parse(code);
+    let cfg = CFGGenerator.generateCfg2(functionObj);
+    let ddg = DDGGenerator.generateDDG(cfg);
+
+    expect(ddg._nodes.length).toBe(9);
+    expectHasEdge(ddg,1,3); // def-use (a)
+    expectHasEdge(ddg,1,4); // def-use (a)
+    expectHasEdge(ddg,1,6); // def-use (a)
+    expectHasEdge(ddg,1,8); // def-use (a)
+
+    expectHasEdge(ddg,2,4); // def-def (b)
+    expectHasEdge(ddg,2,8); // def-use (b)
+    
+})
