@@ -4,6 +4,7 @@ const FDT = require("../../forward-dominance-tree/domain/FDT");
 const Graph = require("../../utils/graphUtils");
 const AssignmentStatement = require("../../code-parser-module/domain/AssignmentStatement");
 const VariableDeclaration = require("../../code-parser-module/domain/VariableDeclaration");
+const UpdateExpression = require("../../code-parser-module/domain/UpdateExpression");
 const DDGEdge = require("../../data-dependence-graph/domain/DDGEdge");
 const _ = require("lodash");
 const Identifier = require("../../code-parser-module/domain/Identifier");
@@ -146,31 +147,37 @@ class CFG {
         return new Graph(this._nodes.length).getCFGPaths(this);
     }
     
+     getNodeById(id) {
+        return this._nodes.find((node) => node._id === id);
+    }
+
     getPathsToNode(startID, exitID, visited = new Set()){
-        if (startID === exitID) return [[exitID]];
+        if (startID === exitID && visited.size > 0) return [[exitID]];
         if (visited.has(startID)) return [];
 
-        let allPathsToExit = [];
+        let allPathsToNode = [];
         let startNode = this.getNodeById(startID);
         visited.add(startID);
 
         startNode._edges.forEach((e) => {
             let pathsToExit = this.getPathsToNode(e._targetId, exitID, new Set(visited));
             pathsToExit.map((path) => {
-                allPathsToExit.push([startID].concat(path))
+                allPathsToNode.push([startID].concat(path))
             });
         })
-        return allPathsToExit;
-    }
-
-    getNodeById(id) {
-        return this._nodes.find((node) => node._id === id);
+        return allPathsToNode;
     }
     
     getTopologies() {
         return this._nodes.flatMap((source) => 
             this._nodes
-                .filter((target) => target._id !== source._id)
+                .filter((target) => {
+                    if (target._id === source._id) {
+                        let paths = this.getPathsToNode(source._id, target._id);
+                        return paths.some((path) => path.length > 1);   // self loop
+                    }
+                    return true;
+                })
                 .map((target) => {
                     let paths = this.getPathsToNode(source._id, target._id);
                     return {
@@ -179,7 +186,6 @@ class CFG {
                         _paths: paths   
                     };
                 })
-                .filter((topology) => topology._paths.length > 0)
         );
     }
 
@@ -209,11 +215,11 @@ class CFG {
         let destNodeUsedVars = toNode._statement.getUsedVariableNames();
 
         let sourceNodeDeclaredVar =
-            fromNode._statement instanceof AssignmentStatement || fromNode._statement instanceof VariableDeclaration
+            fromNode._statement instanceof AssignmentStatement || fromNode._statement instanceof VariableDeclaration || fromNode._statement instanceof UpdateExpression
                 ? fromNode._statement.getDefinedVariable()
                 : undefined;
         let destNodeDeclaredVar =
-            toNode._statement instanceof AssignmentStatement || toNode._statement instanceof VariableDeclaration
+            toNode._statement instanceof AssignmentStatement || toNode._statement instanceof VariableDeclaration || toNode._statement instanceof UpdateExpression
                 ? toNode._statement.getDefinedVariable()
                 : undefined;
 
@@ -226,7 +232,7 @@ class CFG {
         if (sourceNodeDeclaredVar) allVars = allVars.concat(sourceNodeDeclaredVar);
         if (destNodeDeclaredVar) allVars = allVars.concat(destNodeDeclaredVar);
         allVars = _.uniq(allVars);
-        console.log(`All vars:`, allVars);
+        //console.log(`All vars:`, allVars);
 
         let variableDependencyList = [];
         /*
@@ -251,7 +257,7 @@ class CFG {
                     .map((nodeId) => this.getNodeById(nodeId));
                 let hasInterveningDefinition = remainingNodes.some((rNode) => {
                     let rNodeDeclaredVar =
-                        rNode._statement instanceof AssignmentStatement || rNode._statement instanceof VariableDeclaration
+                        rNode._statement instanceof AssignmentStatement || rNode._statement instanceof VariableDeclaration || rNode._statement instanceof UpdateExpression
                             ? rNode._statement.getDefinedVariable()
                             : undefined;
                     if (rNodeDeclaredVar) rNodeDeclaredVar = rNodeDeclaredVar.filter(v => v).map( v => v._name);
@@ -266,7 +272,6 @@ class CFG {
                 //console.log(`sourceNodeUsedVars:`, sourceNodeUsedVars);
                 //console.log(`destNodeUsedVars:`, destNodeUsedVars);
                 
-
                 let def_use = sourceNodeDeclaredVar && sourceNodeDeclaredVar.includes(variable) && destNodeUsedVars.includes(variable);
                 let use_def = sourceNodeUsedVars.includes(variable) && destNodeDeclaredVar && destNodeDeclaredVar.includes(variable);
                 let def_def = sourceNodeDeclaredVar && sourceNodeDeclaredVar.includes(variable) && destNodeDeclaredVar && destNodeDeclaredVar.includes(variable);
@@ -284,7 +289,6 @@ class CFG {
 
         return variableDependencyList.length ? variableDependencyList : [];
     }
-
 
     extractVarNames = (item) => {
         if (!item) return [];

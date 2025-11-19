@@ -45,7 +45,7 @@ class UpdateExpression {
     }
 
     getDefinedVariable() {
-        return this._argument._name;
+        return [this._argument._name];
     }
 
     accept(visitor) {
