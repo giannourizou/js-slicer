@@ -11,14 +11,6 @@ const Parser = require("../../code-parser-module/Parser");
     });
 */
 
-/* Debug
-    console.log("Printed CFG");
-    cfg._nodes.forEach((node) => {
-        const stmt = node?._statement;
-        console.log( `Node ${node._id} → children: [${node._edges.map(e => e.target).join(", ")}] | Statement: ${typeof stmt === "string" ? stmt : JSON.stringify(stmt)}`);
-    }); 
-*/
-
 function parse(str) {
     return Parser.parse(str.split("\n"));
 }
@@ -32,6 +24,7 @@ it("throws error when CFG is missing", () => {
         DDGGenerator.generateDDG(null);
     }).toThrow("Missing required param.");
 });
+
 
 it("DDG1 - Simple Def-Use", () => {
     let code = `
@@ -259,3 +252,74 @@ it("DDG8 - While Loop & Continue Statement", () => {
     expectHasEdge(ddg,7,8); // def-use (sum)
     
 })
+
+it("DDG9 - Arrays - Simple Access", () => {
+    let code =`
+    function foo(){
+        let arr = [1,2,3];  // 1 
+        let x = arr[0];     // 2
+        let y = arr[1];     // 3
+        let z = x + y;      // 4
+    }`
+
+    let functionObj = parse(code);
+    let cfg = CFGGenerator.generateCfg2(functionObj);
+    let ddg = DDGGenerator.generateDDG(cfg);
+
+    expect(ddg._nodes.length).toBe(5);
+    expectHasEdge(ddg,1,2); // def-use (arr)
+    expectHasEdge(ddg,1,3); // def-use (arr)
+    expectHasEdge(ddg,2,4); // def-use (x)
+    expectHasEdge(ddg,3,4); // def-use (y)
+
+})
+
+/*
+it("DDG10 - Arrays - Update Element", () => {
+    let code =`
+    function foo(){
+        let arr = [1,2,3];  // 1
+        arr[0] = 10;        // 2
+        let x = arr[0];     // 3
+    }`
+
+    let functionObj = parse(code);
+    let cfg = CFGGenerator.generateCfg2(functionObj);
+    let ddg = DDGGenerator.generateDDG(cfg);
+
+    expect(ddg._nodes.length).toBe(4);
+    expectHasEdge(ddg,1,2); // def-def (arr)
+    expectHasEdge(ddg,2,3); // def-use (arr)
+    //expect(ddg.hasEdge(1,3)).toBe(false); // should not be a def-use (arr) due to intervening definition
+    // arr acts like a variable!!!
+
+    ddg._nodes.forEach((node) => {
+        const cfgNode = cfg._nodes.find(n => n._id === node.id);
+        const stmt = cfgNode?._statement;
+        console.log( `Node ${node.id} → children: [${node._edges.map(e => e.target).join(", ")}]Statement: ${typeof stmt === "string" ? stmt : JSON.stringify(stmt)}`);
+    });
+});
+*/
+
+it("DDG11 - Arrays - Mutating Methods", () => {
+    let code =`
+    function foo(){
+        let arr = [1,2,3];      // 1
+        arr.push(4);            // 2
+        arr.fill('3',0,1);      // 3
+        arr.pop();              // 4
+        arr.reverse()           // 5
+    }`
+
+    let functionObj = parse(code);
+    let cfg = CFGGenerator.generateCfg2(functionObj);
+    let ddg = DDGGenerator.generateDDG(cfg);
+
+    expect(ddg._nodes.length).toBe(6);
+
+    expectHasEdge(ddg,1,2); // def-def & def-use 
+    expectHasEdge(ddg,2,3); // def-def & def-use & use-def
+    expectHasEdge(ddg,3,4); // def-def & def-use & use-def
+    expectHasEdge(ddg,4,5); // def-def & def-use & use-def
+    
+});

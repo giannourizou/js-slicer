@@ -5,9 +5,11 @@ const Graph = require("../../utils/graphUtils");
 const AssignmentStatement = require("../../code-parser-module/domain/AssignmentStatement");
 const VariableDeclaration = require("../../code-parser-module/domain/VariableDeclaration");
 const UpdateExpression = require("../../code-parser-module/domain/UpdateExpression");
+const FunctionCall = require("../../code-parser-module/domain/FunctionCall");
 const DDGEdge = require("../../data-dependence-graph/domain/DDGEdge");
 const _ = require("lodash");
 const Identifier = require("../../code-parser-module/domain/Identifier");
+
 
 class CFG {
     constructor(nodes) {
@@ -230,20 +232,17 @@ class CFG {
     getVariableDependency(fromNode, toNode, paths) {
         if (fromNode._statement == null || toNode._statement == null) return [];
 
-        /* // Debug/Check constructors
-        console.log(`fromNode statement:`, fromNode._statement?.constructor?.name);
-        console.log(`toNode statement:`, toNode._statement?.constructor?.name);
-        */
-
         let sourceNodeUsedVars = fromNode._statement.getUsedVariableNames();
+        //console.log(`sourceNodeUsedVars of node ${fromNode._id}`,sourceNodeUsedVars);
         let destNodeUsedVars = toNode._statement.getUsedVariableNames();
+        //console.log(`destNodeUsedVars of node ${toNode._id}`,destNodeUsedVars);
 
         let sourceNodeDeclaredVar =
-            fromNode._statement instanceof AssignmentStatement || fromNode._statement instanceof VariableDeclaration || fromNode._statement instanceof UpdateExpression
+            fromNode._statement instanceof AssignmentStatement || fromNode._statement instanceof VariableDeclaration || fromNode._statement instanceof UpdateExpression || fromNode._statement instanceof FunctionCall
                 ? fromNode._statement.getDefinedVariable()
                 : undefined;
         let destNodeDeclaredVar =
-            toNode._statement instanceof AssignmentStatement || toNode._statement instanceof VariableDeclaration || toNode._statement instanceof UpdateExpression
+            toNode._statement instanceof AssignmentStatement || toNode._statement instanceof VariableDeclaration || toNode._statement instanceof UpdateExpression || toNode._statement instanceof FunctionCall
                 ? toNode._statement.getDefinedVariable()
                 : undefined;
 
@@ -281,10 +280,10 @@ class CFG {
                     .map((nodeId) => this.getNodeById(nodeId));
                 let hasInterveningDefinition = remainingNodes.some((rNode) => {
                     let rNodeDeclaredVar =
-                        rNode._statement instanceof AssignmentStatement || rNode._statement instanceof VariableDeclaration || rNode._statement instanceof UpdateExpression
+                        rNode._statement instanceof AssignmentStatement || rNode._statement instanceof VariableDeclaration || rNode._statement instanceof UpdateExpression || rNode._statement instanceof FunctionCall
                             ? rNode._statement.getDefinedVariable()
                             : undefined;
-                    if (rNodeDeclaredVar) rNodeDeclaredVar = rNodeDeclaredVar.filter(v => v).map( v => v._name);
+                    rNodeDeclaredVar = rNodeDeclaredVar ? rNodeDeclaredVar.flatMap(this.extractVarNames) : [];
                     return rNodeDeclaredVar && rNodeDeclaredVar.includes(variable);
                 });
 
@@ -300,7 +299,7 @@ class CFG {
                 let use_def = sourceNodeUsedVars.includes(variable) && destNodeDeclaredVar && destNodeDeclaredVar.includes(variable);
                 let def_def = sourceNodeDeclaredVar && sourceNodeDeclaredVar.includes(variable) && destNodeDeclaredVar && destNodeDeclaredVar.includes(variable);
 
-                //console.log(`def_use: ${def_use}, use_def: ${use_def}, def_def: ${def_def}`);
+                console.log(`def_use: ${def_use}, use_def: ${use_def}, def_def: ${def_def}`);
                 //console.log(`hasInterveningDefinition: ${hasInterveningDefinition}`);
 
                 return !hasInterveningDefinition && (def_use || use_def || def_def);
@@ -319,10 +318,12 @@ class CFG {
         if (typeof item === 'string') return [item];
         if (item instanceof Identifier) return [item._name];
 
-        // Binary Expression
         names = [];
-        if (item._left) names = names.concat(this.extractVarNames(item._left));
-        if (item._right) names = names.concat(this.extractVarNames(item._right));
+        if (item._left) names = names.concat(this.extractVarNames(item._left));     // binary exp
+        if (item._right) names = names.concat(this.extractVarNames(item._right));   // binary exp
+        if (item._object) names = names.concat(this.extractVarNames(item._object)); // member exp
+        if (item._property) names = names.concat(this.extractVarNames(item._property)); // member exp
+        if (item._elements) names = names.concat(item._elements.flatMap(this.extractVarNames)); // array exp
         return names;
     }
 }

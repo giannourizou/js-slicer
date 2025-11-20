@@ -25,6 +25,12 @@ class FunctionCall {
 
     getUsedVariableNames() {
         let varArray = [];
+
+        if (this._name) {
+            let result = this._name.getUsedVariableNames();
+            varArray = varArray.concat(this._name.getUsedVariableNames());
+        }
+
         for (let i in this._args) {
             let arg = this._args[i];
 
@@ -35,6 +41,18 @@ class FunctionCall {
             }
         }
         return varArray;
+    }  
+
+
+    getDefinedVariable() {
+        // Handling mutating methods of arrays
+        if (this._name) {
+            let mutatingMethods = ['pop', 'push', 'reverse', 'shift', 'sort', 'splice', 'fill', 'unshift', 'copyWithin']
+            if (mutatingMethods.includes(this._name._property._name)) {
+                return [this._name._object._name]; 
+            }
+        }
+        return [];
     }
 
     accept(visitor) {
