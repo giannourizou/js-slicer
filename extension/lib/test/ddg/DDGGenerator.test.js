@@ -301,6 +301,7 @@ it("DDG10 - Arrays - Update Element", () => {
 });
 */
 
+
 it("DDG11 - Arrays - Mutating Methods", () => {
     let code =`
     function foo(){
@@ -321,5 +322,69 @@ it("DDG11 - Arrays - Mutating Methods", () => {
     expectHasEdge(ddg,2,3); // def-def & def-use & use-def
     expectHasEdge(ddg,3,4); // def-def & def-use & use-def
     expectHasEdge(ddg,4,5); // def-def & def-use & use-def
-    
+});
+
+it("DDG12 - Arrays - Non-mutating methods", () => {
+    let code =`
+    function foo(){
+        let arr = [1,2,3]         // 1 
+        let x = arr.slice(0,1)    // 2
+        let y = arr.join(',')     // 3
+        x.push('2');              // 4
+        let z = x.includes('2')   // 5
+    }`
+
+    let functionObj = parse(code);
+    let cfg = CFGGenerator.generateCfg2(functionObj);
+    let ddg = DDGGenerator.generateDDG(cfg);
+
+    expect(ddg._nodes.length).toBe(6);
+
+    expectHasEdge(ddg,1,2) // def-use (arr)
+    expectHasEdge(ddg,1,3) // def-use (arr)
+    expectHasEdge(ddg,2,4) // def-def & def-use (x)
+    expectHasEdge(ddg,4,5) // def-use (x)
+    expect(ddg.hasEdge(2,5)).toBe(false) // intervening definition of x
+})
+
+it("DDG13 - Return statement", () => {
+    let code =`
+    function foo(){
+        let x = 6       // 1 
+        let y = 7       // 2
+        return x + y;   // 3
+    }`
+
+    let functionObj = parse(code);
+    let cfg = CFGGenerator.generateCfg2(functionObj);
+    let ddg = DDGGenerator.generateDDG(cfg);
+
+    expect(ddg._nodes.length).toBe(4);
+    expectHasEdge(ddg,1,3); // def-use (x)
+    expectHasEdge(ddg,2,3); // def-use (y)
+
+})
+
+it("DDG14 - Arrow Functions", () =>{
+    let code =`
+    function foo(){
+        let arr = [1,2,3];                       // 1 
+        let doubled = arr.map(x => x*2);         // 2
+        let filtered = doubled.filter(e => e<6); // 3
+        let two = arr[1];                        // 4
+        doubled = doubled.filter(x => x > two);  // 5
+    }`
+
+    let functionObj = parse(code);
+    let cfg = CFGGenerator.generateCfg2(functionObj);
+    let ddg = DDGGenerator.generateDDG(cfg);
+
+    expect(ddg._nodes.length).toBe(6);
+
+    expectHasEdge(ddg,1,2); // def-use (arr)
+    expectHasEdge(ddg,1,4); // def-use (arr)
+    expectHasEdge(ddg,2,3); // def-use (doubled)
+    expectHasEdge(ddg,2,5); // def-use (doubled)
+    expectHasEdge(ddg,3,5); // use-def (doubled)
+    expectHasEdge(ddg,4,5); // def-use (two)
 });

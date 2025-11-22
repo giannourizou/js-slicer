@@ -288,7 +288,7 @@ class CFG {
                 });
 
 
-                console.log(`\nChecking ${fromNode._id} → ${toNode._id} for variable '${variable}'`);
+                //console.log(`\nChecking ${fromNode._id} → ${toNode._id} for variable '${variable}'`);
                 //console.log(`All vars`, allVars);
                 //console.log(`sourceNodeDeclaredVar:`, sourceNodeDeclaredVar);
                 //console.log(`destNodeDeclaredVar:`, destNodeDeclaredVar);
@@ -317,6 +317,7 @@ class CFG {
         if (!item) return [];
         if (typeof item === 'string') return [item];
         if (item instanceof Identifier) return [item._name];
+        if (item instanceof FunctionCall) return item.getUsedVariableNames().flatMap(this.extractVarNames);
 
         names = [];
         if (item._left) names = names.concat(this.extractVarNames(item._left));     // binary exp
@@ -324,6 +325,7 @@ class CFG {
         if (item._object) names = names.concat(this.extractVarNames(item._object)); // member exp
         if (item._property) names = names.concat(this.extractVarNames(item._property)); // member exp
         if (item._elements) names = names.concat(item._elements.flatMap(this.extractVarNames)); // array exp
+        //if (item._args) {names = names.concat(item._args.flatMap(this.extractVarNames));}
         return names;
     }
 }

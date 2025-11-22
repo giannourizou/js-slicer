@@ -5,6 +5,20 @@ class ArrowFunctionExpression {
         this._isAsync = isAsync;
     }
 
+    getUsedVariableNames(){
+        varNames = [];
+        paramNames = this._params.map(p => p._name);
+
+        if (this._body && typeof this._body.getUsedVariableNames === 'function') {
+            varNames = varNames.concat(this._body.getUsedVariableNames());
+        } else if (this._body && this._body._name) {
+            varNames.push(this._body._name);
+        }
+        
+        varNames = varNames.filter(v => !paramNames.includes(v));   // keep only the external vars
+        return varNames; 
+    }
+
     asText() {
         let paramsStr = "";
         for (let param of this._params) {
