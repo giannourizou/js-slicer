@@ -18,9 +18,9 @@ class ArrayExpression {
     getUsedVariableNames() {
         let vars = [];
         this._elements.forEach((e) => {
-            if (e && e.getUsedVariableNames) {
+            if (e?.getUsedVariableNames) {
                 vars = vars.concat(e.getUsedVariableNames());
-            } else if (e && e._name) {
+            } else if (e?._name) {
                 vars.push(e._name);
             }
         });

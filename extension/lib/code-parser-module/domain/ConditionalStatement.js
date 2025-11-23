@@ -74,6 +74,34 @@ class ConditionalStatement {
         return statements;
     }
 
+    getUsedVariableNames() {
+        let vars = [];
+
+        if (this._condition?.getUsedVariableNames) {
+            vars = vars.concat(this._condition.getUsedVariableNames());
+        } else if (this._condition?._name) {
+            vars.push(this._condition._name);
+        }
+        
+        if (this._then?.getUsedVariableNames) {
+            vars = vars.concat(this._then.getUsedVariableNames());
+        } else if (this._then?._name) {
+            vars.push(this._then._name);
+        }
+        
+        if (this._alternates?.getUsedVariableNames) {
+            vars = vars.concat(this._alternates.getUsedVariableNames());
+        } else if (this._alternates?._name) {
+            vars.push(this._alternates._name);
+        }
+
+        return vars;
+    }
+
+    getDefinedVariable() {
+        return [];
+    }
+
     asText() {
         return `${this._condition.asText()} ? ${this._then.asText()} : ${this._alternates.asText()}`;
     }

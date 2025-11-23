@@ -6,6 +6,7 @@ const AssignmentStatement = require("../../code-parser-module/domain/AssignmentS
 const VariableDeclaration = require("../../code-parser-module/domain/VariableDeclaration");
 const UpdateExpression = require("../../code-parser-module/domain/UpdateExpression");
 const FunctionCall = require("../../code-parser-module/domain/FunctionCall");
+const ConditionalStatement = require("../../code-parser-module/domain/ConditionalStatement");
 const DDGEdge = require("../../data-dependence-graph/domain/DDGEdge");
 const _ = require("lodash");
 const Identifier = require("../../code-parser-module/domain/Identifier");
@@ -233,7 +234,7 @@ class CFG {
         if (fromNode._statement == null || toNode._statement == null) return [];
 
         let sourceNodeUsedVars = fromNode._statement.getUsedVariableNames();
-        //console.log(`sourceNodeUsedVars of node ${fromNode._id}`,sourceNodeUsedVars);
+        console.log(`sourceNodeUsedVars of node ${fromNode._id}`,sourceNodeUsedVars);
         let destNodeUsedVars = toNode._statement.getUsedVariableNames();
         //console.log(`destNodeUsedVars of node ${toNode._id}`,destNodeUsedVars);
 
@@ -318,6 +319,7 @@ class CFG {
         if (typeof item === 'string') return [item];
         if (item instanceof Identifier) return [item._name];
         if (item instanceof FunctionCall) return item.getUsedVariableNames().flatMap(this.extractVarNames);
+        if (item instanceof ConditionalStatement) return item.getUsedVariableNames().flatMap(this.extractVarNames);
 
         names = [];
         if (item._left) names = names.concat(this.extractVarNames(item._left));     // binary exp

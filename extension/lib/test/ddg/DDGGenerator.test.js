@@ -2,15 +2,6 @@ const CFGGenerator = require("../../control-flow-graph/CFGGenerator");
 const DDGGenerator = require("../../data-dependence-graph/DDGGenerator");
 const Parser = require("../../code-parser-module/Parser");
 
-/* Debug
-    console.log("Printed DDG");
-    ddg._nodes.forEach((node) => {
-        const cfgNode = cfg._nodes.find(n => n._id === node.id);
-        const stmt = cfgNode?._statement;
-        console.log( `Node ${node.id} → children: [${node._edges.map(e => e.target).join(", ")}]Statement: ${typeof stmt === "string" ? stmt : JSON.stringify(stmt)}`);
-    });
-*/
-
 function parse(str) {
     return Parser.parse(str.split("\n"));
 }
@@ -274,6 +265,7 @@ it("DDG9 - Arrays - Simple Access", () => {
 
 })
 
+
 /*
 it("DDG10 - Arrays - Update Element", () => {
     let code =`
@@ -388,3 +380,58 @@ it("DDG14 - Arrow Functions", () =>{
     expectHasEdge(ddg,3,5); // use-def (doubled)
     expectHasEdge(ddg,4,5); // def-use (two)
 });
+
+
+it("DDG15 - Logical Operators", () =>{
+    let code =`
+    function foo(){
+        let x = true;   // 1
+        let y = false;  // 2
+        let z = true;   // 3
+        return x || y && z; // 4
+    }`
+
+    let functionObj = parse(code);
+    let cfg = CFGGenerator.generateCfg2(functionObj);
+    let ddg = DDGGenerator.generateDDG(cfg);
+
+    expect(ddg._nodes.length).toBe(5);
+
+    expectHasEdge(ddg,1,4); // def-use (x)
+    expectHasEdge(ddg,2,4); // def-use (y)
+    expectHasEdge(ddg,3,4); // def-use (z)
+
+});
+
+
+it("DDG15 - Ternary Operator", () =>{
+    let code =`
+    function foo(){
+        let x = 10;           // 1
+        let y = 5;            // 2
+        let max = x>y ? x : y // 3
+        x = max               // 4
+    }`
+
+    let functionObj = parse(code);
+    let cfg = CFGGenerator.generateCfg2(functionObj);
+    let ddg = DDGGenerator.generateDDG(cfg);
+
+    expect(ddg._nodes.length).toBe(5);
+
+    expectHasEdge(ddg,1,3); // def-use (x)
+    expectHasEdge(ddg,1,4); // def-def (x)
+    expectHasEdge(ddg,2,3); // def-use (y)
+    expectHasEdge(ddg,3,4); // def-use (max) & use-def (x)
+
+});
+
+
+/* Debug
+    console.log("Printed DDG");
+    ddg._nodes.forEach((node) => {
+        const cfgNode = cfg._nodes.find(n => n._id === node.id);
+        const stmt = cfgNode?._statement;
+        console.log( `Node ${node.id} → children: [${node._edges.map(e => e.target).join(", ")}]Statement: ${typeof stmt === "string" ? stmt : JSON.stringify(stmt)}`);
+    });
+*/
