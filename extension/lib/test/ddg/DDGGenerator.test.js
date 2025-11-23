@@ -427,6 +427,26 @@ it("DDG15 - Ternary Operator", () =>{
 });
 
 
+it("DDG16 - Unary Operators", () =>{
+    let code =`
+    function foo(){
+        let x = 0;           // 1
+        let y = ~x;          // 2
+        let z = typeof x;    // 3
+        let e = !!x;          // 4
+        
+    }`
+
+    let functionObj = parse(code);
+    let cfg = CFGGenerator.generateCfg2(functionObj);
+    let ddg = DDGGenerator.generateDDG(cfg);
+
+    expectHasEdge(ddg,1,2); // def-use(x)
+    expectHasEdge(ddg,1,3); // def-use(x)
+    expectHasEdge(ddg,1,4); // def-use(x)
+
+});
+
 /* Debug
     console.log("Printed DDG");
     ddg._nodes.forEach((node) => {

@@ -25,11 +25,11 @@ class UnaryExpression {
 
     getUsedVariableNames() {
         let varArray = [];
-        if (this._argument instanceof Identifier) {
-            varArray.push(this._argument._name);
-            //return varArray
-        } else if (!(this._argument instanceof Identifier) && !(this._argument instanceof Literal)) {
+        
+        if (this._argument?.getUsedVariableNames) {
             varArray = varArray.concat(this.argument.getUsedVariableNames());
+        } else if (this._argument._name) {
+            varArray.push(this._argument._name)
         }
 
         return varArray;
