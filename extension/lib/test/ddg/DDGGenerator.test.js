@@ -404,7 +404,7 @@ it("DDG15 - Logical Operators", () =>{
 });
 
 
-it("DDG15 - Ternary Operator", () =>{
+it("DDG16 - Ternary Operator", () =>{
     let code =`
     function foo(){
         let x = 10;           // 1
@@ -427,7 +427,7 @@ it("DDG15 - Ternary Operator", () =>{
 });
 
 
-it("DDG16 - Unary Operators", () =>{
+it("DDG17 - Unary Operators", () =>{
     let code =`
     function foo(){
         let x = 0;           // 1
@@ -447,11 +447,104 @@ it("DDG16 - Unary Operators", () =>{
 
 });
 
+it("DDG18 - Compound Operators", () =>{
+    let code =`
+    function foo() {
+        let sum = 0;    // 1
+        for (let i = 0; i < 6; i++){     // 2,3,5
+                sum += i;            // 4
+        }
+        sum -= 6;   // 6
+        return sum; // 7
+    }`
+
+    let functionObj = parse(code);
+    let cfg = CFGGenerator.generateCfg2(functionObj);
+    let ddg = DDGGenerator.generateDDG(cfg);
+
+    ddg._nodes.forEach((node) => {
+        const cfgNode = cfg._nodes.find(n => n._id === node.id);
+        const stmt = cfgNode?._statement;
+        console.log( `Node ${node.id} → children: [${node._edges.map(e => e.target).join(", ")}] Statement: ${typeof stmt === "string" ? stmt : JSON.stringify(stmt)}`);
+    });
+
+    expectHasEdge(ddg,1,4); // def-def & def-use (sum)
+    expectHasEdge(ddg,1,6); // def-use & def-def (sum)
+    expectHasEdge(ddg,2,3); // def-use(i)
+    expectHasEdge(ddg,2,4); // def-use(i)
+    expectHasEdge(ddg,2,5); // def-def & def-use (i)
+    expectHasEdge(ddg,3,5); // 
+    expectHasEdge(ddg,4,4); //
+    expectHasEdge(ddg,4,5); //
+    expectHasEdge(ddg,4,6); //
+    expectHasEdge(ddg,5,3); //
+    expectHasEdge(ddg,5,4); //
+    expectHasEdge(ddg,5,5); //
+    expectHasEdge(ddg,6,7); // def-use (sum)
+    
+});
+
+it("DDG19 - Nested Loops", () =>{
+    let code =`
+    function foo() {
+        let sum = 0;    // 1
+        for (let i = 0; i < 6; i++){     // 2,3,8
+            for (let j = 0; j < 7; j++){ // 4,5,7
+                sum += i + j;            // 6
+            }
+        }
+        return sum; // 9
+    }`
+
+
+    let functionObj = parse(code);
+    let cfg = CFGGenerator.generateCfg2(functionObj);
+    let ddg = DDGGenerator.generateDDG(cfg);
+
+    expectHasEdge(ddg,1,6); // def-def & def-use (sum)
+    expectHasEdge(ddg,1,9); // def-use (sum)
+
+    expectHasEdge(ddg,2,3); // def-use(i)
+    expectHasEdge(ddg,2,6); // def-use(i)
+    expectHasEdge(ddg,2,8); // def-def & def-use (i)
+
+    expectHasEdge(ddg,3,8); // use-def(i)
+
+    expectHasEdge(ddg,4,4); // def-def(j)
+    expectHasEdge(ddg,4,5); // def-use(j)
+    expectHasEdge(ddg,4,6); // def-use(j)
+    expectHasEdge(ddg,4,7); // def-def & def-use(j)
+
+    expectHasEdge(ddg,5,4); // use-def(j)
+    expectHasEdge(ddg,5,7); // use-def(j)
+
+    expectHasEdge(ddg,6,6); // def-def(sum)
+    expectHasEdge(ddg,6,7); // use-def(j)
+    expectHasEdge(ddg,6,8); // use-def(i)
+    expectHasEdge(ddg,6,9); // def-use(sum)
+
+    expectHasEdge(ddg,7,4); // def-def & use-def(j)
+    expectHasEdge(ddg,7,5); // def-use(j)
+    expectHasEdge(ddg,7,6); // def-use(j)
+    expectHasEdge(ddg,7,7); // def-use & use-def & def-def (j)
+
+    expectHasEdge(ddg,8,3); // def-use(i)
+    expectHasEdge(ddg,8,6); // def-use(i)
+    expectHasEdge(ddg,8,8); // def-def & def-use & use-def(i)
+
+    ddg._nodes.forEach((node) => {
+        const cfgNode = cfg._nodes.find(n => n._id === node.id);
+        const stmt = cfgNode?._statement;
+        console.log( `Node ${node.id} → children: [${node._edges.map(e => e.target).join(", ")}]Statement: ${typeof stmt === "string" ? stmt : JSON.stringify(stmt)}`);
+    });
+
+});
+
 /* Debug
     console.log("Printed DDG");
     ddg._nodes.forEach((node) => {
         const cfgNode = cfg._nodes.find(n => n._id === node.id);
         const stmt = cfgNode?._statement;
-        console.log( `Node ${node.id} → children: [${node._edges.map(e => e.target).join(", ")}]Statement: ${typeof stmt === "string" ? stmt : JSON.stringify(stmt)}`);
+        console.log( `Node ${node.id} → children: [${node._edges.map(e => e.target).join(", ")}] Statement: ${typeof stmt === "string" ? stmt : JSON.stringify(stmt)}`);
     });
 */

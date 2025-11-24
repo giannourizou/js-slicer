@@ -34,11 +34,20 @@ class AssignmentStatement {
 
     getUsedVariableNames() {
         let varArray = [];
-        //We use only the right part of the assignment as the left is not a variable use but an assignment.
-        if (this._right instanceof Identifier) {
-            varArray.push(this._right._name);
-        } else if (!(this._right instanceof Identifier) && !(this._right instanceof Literal)) {
+        
+        if (this._right?.getUsedVariableNames) {
             varArray = varArray.concat(this._right.getUsedVariableNames());
+        } else if (this._right?._name) {
+            varArray.push(this._right._name);
+        }
+
+        let compoundOperators = ['+=', '-=', '*=', '/=', '%=', '**=', '&=', '|=', '^=', '<<=', '>>=', '>>>=', '&&=', '||=', '??='];
+        if(compoundOperators.includes(this._operator)){
+            if (this._left?.getUsedVariableNames) {
+                varArray = varArray.concat(this._left.getUsedVariableNames());
+            } else if (this._left?._name) {
+                varArray.push(this._left._name);
+            }
         }
         return varArray;
     }

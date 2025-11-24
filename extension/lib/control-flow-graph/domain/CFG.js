@@ -233,7 +233,7 @@ class CFG {
         if (fromNode._statement == null || toNode._statement == null) return [];
 
         let sourceNodeUsedVars = fromNode._statement.getUsedVariableNames();
-        console.log(`sourceNodeUsedVars of node ${fromNode._id}`,sourceNodeUsedVars);
+        //console.log(`sourceNodeUsedVars of node ${fromNode._id}`,sourceNodeUsedVars);
         let destNodeUsedVars = toNode._statement.getUsedVariableNames();
         //console.log(`destNodeUsedVars of node ${toNode._id}`,destNodeUsedVars);
 
@@ -274,7 +274,6 @@ class CFG {
         for (let i in allVars) {
             let variable = allVars[i];
             let nodesAreDataDependent = paths.some((path) => {
-                //console.log(`Path:`, path);
                 let remainingNodes = path
                     .filter((nodeId) => nodeId !== fromNode._id && nodeId !== toNode._id)
                     .map((nodeId) => this.getNodeById(nodeId));
@@ -288,7 +287,7 @@ class CFG {
                 });
 
 
-                //console.log(`\nChecking ${fromNode._id} → ${toNode._id} for variable '${variable}'`);
+                console.log(`\nChecking ${fromNode._id} → ${toNode._id} for variable '${variable}'`);
                 //console.log(`All vars`, allVars);
                 //console.log(`sourceNodeDeclaredVar:`, sourceNodeDeclaredVar);
                 //console.log(`destNodeDeclaredVar:`, destNodeDeclaredVar);
