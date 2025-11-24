@@ -11,6 +11,10 @@ class NewExpression {
         return this._args;
     }
 
+    getUsedVariableNames(){
+        return this._args;
+    }
+
     asText() {
         let str = "";
         for (let arg of this._args) {

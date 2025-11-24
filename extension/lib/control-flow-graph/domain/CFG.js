@@ -315,16 +315,9 @@ class CFG {
     extractVarNames = (item) => {
         if (!item) return [];
         if (typeof item === 'string') return [item];
-        if (item instanceof Identifier) return [item._name];  
 
         names = [];
-        if (item?.getUsedVariableNames){names = names.concat(item.getUsedVariableNames().flatMap(this.extractVarNames));}
-        if (item._left) names = names.concat(this.extractVarNames(item._left));     // binary exp
-        if (item._right) names = names.concat(this.extractVarNames(item._right));   // binary exp
-        if (item._object) names = names.concat(this.extractVarNames(item._object)); // member exp
-        if (item._property) names = names.concat(this.extractVarNames(item._property)); // member exp
-        if (item._elements) names = names.concat(item._elements.flatMap(this.extractVarNames)); // array exp
-        //if (item._args) {names = names.concat(item._args.flatMap(this.extractVarNames));}
+        if (item?.getUsedVariableNames) {names = names.concat(item.getUsedVariableNames().flatMap(this.extractVarNames));}
         return names;
     }
 }

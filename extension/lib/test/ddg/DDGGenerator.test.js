@@ -473,13 +473,13 @@ it("DDG18 - Compound Operators", () =>{
     expectHasEdge(ddg,2,3); // def-use(i)
     expectHasEdge(ddg,2,4); // def-use(i)
     expectHasEdge(ddg,2,5); // def-def & def-use (i)
-    expectHasEdge(ddg,3,5); // 
-    expectHasEdge(ddg,4,4); //
-    expectHasEdge(ddg,4,5); //
-    expectHasEdge(ddg,4,6); //
-    expectHasEdge(ddg,5,3); //
-    expectHasEdge(ddg,5,4); //
-    expectHasEdge(ddg,5,5); //
+    expectHasEdge(ddg,3,5); // use-def(i)
+    expectHasEdge(ddg,4,4); // use-def(sum)
+    expectHasEdge(ddg,4,5); // use-def(i)
+    expectHasEdge(ddg,4,6); // def-def & use-def (sum)
+    expectHasEdge(ddg,5,3); // def-use(i)
+    expectHasEdge(ddg,5,4); // def-use(i)
+    expectHasEdge(ddg,5,5); // def-def & use-def & def-use (i)
     expectHasEdge(ddg,6,7); // def-use (sum)
     
 });
@@ -539,6 +539,65 @@ it("DDG19 - Nested Loops", () =>{
     });
 
 });
+
+it("DDG20 - Throw Statement", () =>{
+    let code =`
+    function foo() {
+        let error = "Error"; // 1
+        throw error; // 2
+    }`
+
+    let functionObj = parse(code);
+    let cfg = CFGGenerator.generateCfg2(functionObj);
+    let ddg = DDGGenerator.generateDDG(cfg);
+
+    expect(ddg._nodes.length).toBe(3);
+
+    expectHasEdge(ddg,1,2); // def-use (error)
+
+});
+
+it("DDG21 - Object Property", () =>{
+    let code = `
+    function foo() {
+        let x = 'hello';         // 1
+        let y = 'world';         // 2
+        let obj = {a:x, b:y};    // 3
+        let sum = obj.a + obj.b; // 4
+    }`
+
+    let functionObj = parse(code);
+    let cfg = CFGGenerator.generateCfg2(functionObj);
+    let ddg = DDGGenerator.generateDDG(cfg);
+
+    expectHasEdge(ddg,1,3); // def-use(x)
+    expectHasEdge(ddg,2,3); // def-use(y)
+    expectHasEdge(ddg,3,4); // def-use (obj)
+
+});
+
+
+it("DDG22 - New Expression", () =>{
+    let code = `
+    function foo() {
+        let size = 10;  // 1
+        let arr = new Array(size); // 2 
+    }`
+
+    let functionObj = parse(code);
+    let cfg = CFGGenerator.generateCfg2(functionObj);
+    let ddg = DDGGenerator.generateDDG(cfg);
+
+    expectHasEdge(ddg,1,2); // def-use(size)
+
+});
+
+
+
+// UNSUPORTED TESTS
+// Template Literals
+// Spread Operator
+// ArrayPattern (deconstructing an array)
 
 /* Debug
     console.log("Printed DDG");
