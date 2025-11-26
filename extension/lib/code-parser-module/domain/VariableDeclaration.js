@@ -1,6 +1,3 @@
-const Identifier = require("./Identifier");
-const Literal = require("./Literal");
-
 class VariableDeclaration {
     constructor(type, names, values) {
         this._type = type;

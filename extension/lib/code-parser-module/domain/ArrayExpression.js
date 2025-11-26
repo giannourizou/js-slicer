@@ -16,15 +16,15 @@ class ArrayExpression {
     }
 
     getUsedVariableNames() {
-        let vars = [];
-        this._elements.forEach((e) => {
+        let varArray = [];
+        this._elements?.forEach((e) => {
             if (e?.getUsedVariableNames) {
-                vars = vars.concat(e.getUsedVariableNames());
+                varArray = varArray.concat(e.getUsedVariableNames());
             } else if (e?._name) {
-                vars.push(e._name);
+                varArray.push(e._name);
             }
         });
-        return vars;
+        return varArray;
     }
 
     getDefinedVariable() {

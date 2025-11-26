@@ -1,6 +1,3 @@
-const Identifier = require("./Identifier");
-const Literal = require("./Literal");
-
 class FunctionCall {
     constructor(name, args) {
         this._name = name;
@@ -26,18 +23,16 @@ class FunctionCall {
     getUsedVariableNames() {
         let varArray = [];
 
-        if (this._name) {
-            let result = this._name.getUsedVariableNames();
+        if (this._name.getUsedVariableNames()) {
             varArray = varArray.concat(this._name.getUsedVariableNames());
         }
 
         for (let i in this._args) {
             let arg = this._args[i];
-
-            if (arg instanceof Identifier) {
-                varArray.push(arg._name);
-            } else if (!(arg instanceof Identifier) && !(arg instanceof Literal)) {
+            if (arg.getUsedVariableNames) {
                 varArray = varArray.concat(arg.getUsedVariableNames());
+            } else if (arg._name) {
+                varArray.push(arg._name);
             }
         }
         return varArray;

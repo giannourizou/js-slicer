@@ -6,17 +6,17 @@ class ArrowFunctionExpression {
     }
 
     getUsedVariableNames(){
-        varNames = [];
+        varArray = [];
         paramNames = this._params.map(p => p._name);
 
         if (this._body && typeof this._body.getUsedVariableNames === 'function') {
-            varNames = varNames.concat(this._body.getUsedVariableNames());
+            varArray = varArray.concat(this._body.getUsedVariableNames());
         } else if (this._body && this._body._name) {
-            varNames.push(this._body._name);
+            varArray.push(this._body._name);
         }
         
-        varNames = varNames.filter(v => !paramNames.includes(v));   // keep only the external vars
-        return varNames; 
+        varArray = varArray.filter(v => !paramNames.includes(v));   // keep only the external vars
+        return varArray; 
     }
 
     asText() {

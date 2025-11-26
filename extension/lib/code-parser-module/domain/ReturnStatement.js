@@ -1,6 +1,3 @@
-const Identifier = require("./Identifier");
-const Literal = require("./Literal");
-
 class ReturnStatement {
     constructor(value) {
         this._value = value;
@@ -15,11 +12,15 @@ class ReturnStatement {
     }
 
     getUsedVariableNames() {
-        if (this._value instanceof Identifier) return [this._value._name];
+        varArray = []
 
-        if (this._value instanceof Literal) return [];
+        if (this._value?.getUsedVariableNames){
+            varArray = varArray.concat(this._value.getUsedVariableNames())
+        } else if (this._value?._name){
+            varArray.push(this._value._name)
+        }
 
-        return this._value.getUsedVariableNames();
+        return varArray;
     }
 
     accept(visitor) {

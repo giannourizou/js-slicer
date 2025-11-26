@@ -233,9 +233,7 @@ class CFG {
         if (fromNode._statement == null || toNode._statement == null) return [];
 
         let sourceNodeUsedVars = fromNode._statement.getUsedVariableNames();
-        //console.log(`sourceNodeUsedVars of node ${fromNode._id}`,sourceNodeUsedVars);
         let destNodeUsedVars = toNode._statement.getUsedVariableNames();
-        //console.log(`destNodeUsedVars of node ${toNode._id}`,destNodeUsedVars);
 
         let sourceNodeDeclaredVar =
             fromNode._statement instanceof AssignmentStatement || fromNode._statement instanceof VariableDeclaration || fromNode._statement instanceof UpdateExpression || fromNode._statement instanceof FunctionCall
@@ -255,7 +253,6 @@ class CFG {
         if (sourceNodeDeclaredVar) allVars = allVars.concat(sourceNodeDeclaredVar);
         if (destNodeDeclaredVar) allVars = allVars.concat(destNodeDeclaredVar);
         allVars = _.uniq(allVars);
-        //console.log(`All vars:`, allVars);
 
         let variableDependencyList = [];
         /*
@@ -286,26 +283,16 @@ class CFG {
                     return rNodeDeclaredVar && rNodeDeclaredVar.includes(variable);
                 });
 
+                //console.log(`\nChecking ${fromNode._id} → ${toNode._id} for variable '${variable}'`);
 
-                console.log(`\nChecking ${fromNode._id} → ${toNode._id} for variable '${variable}'`);
-                //console.log(`All vars`, allVars);
-                //console.log(`sourceNodeDeclaredVar:`, sourceNodeDeclaredVar);
-                //console.log(`destNodeDeclaredVar:`, destNodeDeclaredVar);
-                //console.log(`sourceNodeUsedVars:`, sourceNodeUsedVars);
-                //console.log(`destNodeUsedVars:`, destNodeUsedVars);
-                
                 let def_use = sourceNodeDeclaredVar && sourceNodeDeclaredVar.includes(variable) && destNodeUsedVars.includes(variable);
                 let use_def = sourceNodeUsedVars.includes(variable) && destNodeDeclaredVar && destNodeDeclaredVar.includes(variable);
                 let def_def = sourceNodeDeclaredVar && sourceNodeDeclaredVar.includes(variable) && destNodeDeclaredVar && destNodeDeclaredVar.includes(variable);
 
-                console.log(`def_use: ${def_use}, use_def: ${use_def}, def_def: ${def_def}`);
-                //console.log(`hasInterveningDefinition: ${hasInterveningDefinition}`);
+                //console.log(`def_use: ${def_use}, use_def: ${use_def}, def_def: ${def_def}`);
 
                 return !hasInterveningDefinition && (def_use || use_def || def_def);
             });
-
-            //console.log(`Data dependent? ${nodesAreDataDependent}`);
-
             if (nodesAreDataDependent) variableDependencyList.push(variable);
         }
 
@@ -320,6 +307,7 @@ class CFG {
         if (item?.getUsedVariableNames) {names = names.concat(item.getUsedVariableNames().flatMap(this.extractVarNames));}
         return names;
     }
+
 }
 
 module.exports = CFG;

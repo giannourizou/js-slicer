@@ -196,6 +196,7 @@ it("DDG7 - Switch & Break Statement ", () => {
     let ddg = DDGGenerator.generateDDG(cfg);
 
     expect(ddg._nodes.length).toBe(9);
+
     expectHasEdge(ddg,1,3); // def-use (a)
     expectHasEdge(ddg,1,4); // def-use (a)
     expectHasEdge(ddg,1,6); // def-use (a)
@@ -258,41 +259,13 @@ it("DDG9 - Arrays - Simple Access", () => {
     let ddg = DDGGenerator.generateDDG(cfg);
 
     expect(ddg._nodes.length).toBe(5);
+
     expectHasEdge(ddg,1,2); // def-use (arr)
     expectHasEdge(ddg,1,3); // def-use (arr)
     expectHasEdge(ddg,2,4); // def-use (x)
     expectHasEdge(ddg,3,4); // def-use (y)
 
 })
-
-
-/*
-it("DDG10 - Arrays - Update Element", () => {
-    let code =`
-    function foo(){
-        let arr = [1,2,3];  // 1
-        arr[0] = 10;        // 2
-        let x = arr[0];     // 3
-    }`
-
-    let functionObj = parse(code);
-    let cfg = CFGGenerator.generateCfg2(functionObj);
-    let ddg = DDGGenerator.generateDDG(cfg);
-
-    expect(ddg._nodes.length).toBe(4);
-    expectHasEdge(ddg,1,2); // def-def (arr)
-    expectHasEdge(ddg,2,3); // def-use (arr)
-    //expect(ddg.hasEdge(1,3)).toBe(false); // should not be a def-use (arr) due to intervening definition
-    // arr acts like a variable!!!
-
-    ddg._nodes.forEach((node) => {
-        const cfgNode = cfg._nodes.find(n => n._id === node.id);
-        const stmt = cfgNode?._statement;
-        console.log( `Node ${node.id} → children: [${node._edges.map(e => e.target).join(", ")}]Statement: ${typeof stmt === "string" ? stmt : JSON.stringify(stmt)}`);
-    });
-});
-*/
-
 
 it("DDG11 - Arrays - Mutating Methods", () => {
     let code =`
@@ -352,6 +325,7 @@ it("DDG13 - Return statement", () => {
     let ddg = DDGGenerator.generateDDG(cfg);
 
     expect(ddg._nodes.length).toBe(4);
+
     expectHasEdge(ddg,1,3); // def-use (x)
     expectHasEdge(ddg,2,3); // def-use (y)
 
@@ -433,13 +407,15 @@ it("DDG17 - Unary Operators", () =>{
         let x = 0;           // 1
         let y = ~x;          // 2
         let z = typeof x;    // 3
-        let e = !!x;          // 4
+        let e = !!x;         // 4
         
     }`
 
     let functionObj = parse(code);
     let cfg = CFGGenerator.generateCfg2(functionObj);
     let ddg = DDGGenerator.generateDDG(cfg);
+
+    expect(ddg._nodes.length).toBe(5);
 
     expectHasEdge(ddg,1,2); // def-use(x)
     expectHasEdge(ddg,1,3); // def-use(x)
@@ -462,11 +438,7 @@ it("DDG18 - Compound Operators", () =>{
     let cfg = CFGGenerator.generateCfg2(functionObj);
     let ddg = DDGGenerator.generateDDG(cfg);
 
-    ddg._nodes.forEach((node) => {
-        const cfgNode = cfg._nodes.find(n => n._id === node.id);
-        const stmt = cfgNode?._statement;
-        console.log( `Node ${node.id} → children: [${node._edges.map(e => e.target).join(", ")}] Statement: ${typeof stmt === "string" ? stmt : JSON.stringify(stmt)}`);
-    });
+    expect(ddg._nodes.length).toBe(8);
 
     expectHasEdge(ddg,1,4); // def-def & def-use (sum)
     expectHasEdge(ddg,1,6); // def-use & def-def (sum)
@@ -501,6 +473,8 @@ it("DDG19 - Nested Loops", () =>{
     let cfg = CFGGenerator.generateCfg2(functionObj);
     let ddg = DDGGenerator.generateDDG(cfg);
 
+    expect(ddg._nodes.length).toBe(10);
+
     expectHasEdge(ddg,1,6); // def-def & def-use (sum)
     expectHasEdge(ddg,1,9); // def-use (sum)
 
@@ -531,12 +505,6 @@ it("DDG19 - Nested Loops", () =>{
     expectHasEdge(ddg,8,3); // def-use(i)
     expectHasEdge(ddg,8,6); // def-use(i)
     expectHasEdge(ddg,8,8); // def-def & def-use & use-def(i)
-
-    ddg._nodes.forEach((node) => {
-        const cfgNode = cfg._nodes.find(n => n._id === node.id);
-        const stmt = cfgNode?._statement;
-        console.log( `Node ${node.id} → children: [${node._edges.map(e => e.target).join(", ")}]Statement: ${typeof stmt === "string" ? stmt : JSON.stringify(stmt)}`);
-    });
 
 });
 
@@ -570,6 +538,8 @@ it("DDG21 - Object Property", () =>{
     let cfg = CFGGenerator.generateCfg2(functionObj);
     let ddg = DDGGenerator.generateDDG(cfg);
 
+    expect(ddg._nodes.length).toBe(5);
+
     expectHasEdge(ddg,1,3); // def-use(x)
     expectHasEdge(ddg,2,3); // def-use(y)
     expectHasEdge(ddg,3,4); // def-use (obj)
@@ -588,13 +558,35 @@ it("DDG22 - New Expression", () =>{
     let cfg = CFGGenerator.generateCfg2(functionObj);
     let ddg = DDGGenerator.generateDDG(cfg);
 
+    expect(ddg._nodes.length).toBe(3);
+
     expectHasEdge(ddg,1,2); // def-use(size)
 
 });
 
 
+it("DDG10! - Arrays - Update Element", () => {
+    let code =`
+    function foo(){
+        let arr = [1,2,3];  // 1
+        arr[0] = 10;        // 2
+        let x = arr[1];     // 3
+    }`
 
-// UNSUPORTED TESTS
+    let functionObj = parse(code);
+    let cfg = CFGGenerator.generateCfg2(functionObj);
+    let ddg = DDGGenerator.generateDDG(cfg);
+
+    expect(ddg._nodes.length).toBe(4);
+
+    expectHasEdge(ddg,1,2); // def-def (arr)
+    expectHasEdge(ddg,2,3); // def-use (arr)
+    //expect(ddg.hasEdge(1,3)).toBe(false); // should not be a def-use (arr) due to intervening definition
+    // arr acts like a variable!!!
+    // Do we accept variable level limitation?
+});
+
+// UNSUPPORTED TESTS
 // Template Literals
 // Spread Operator
 // ArrayPattern (deconstructing an array)

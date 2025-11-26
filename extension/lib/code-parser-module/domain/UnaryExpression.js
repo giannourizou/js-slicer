@@ -1,6 +1,3 @@
-const Identifier = require("./Identifier");
-const Literal = require("./Literal");
-
 class UnaryExpression {
     constructor(argument, operator) {
         this._argument = argument;
