@@ -232,6 +232,7 @@ class CFG {
     getVariableDependency(fromNode, toNode, paths) {
         if (fromNode._statement == null || toNode._statement == null) return [];
 
+        //console.log(`Apo ${fromNode._id} Se ${toNode._id}`);
         let sourceNodeUsedVars = fromNode._statement.getUsedVariableNames();
         let destNodeUsedVars = toNode._statement.getUsedVariableNames();
 
@@ -280,10 +281,11 @@ class CFG {
                             ? rNode._statement.getDefinedVariable()
                             : undefined;
                     rNodeDeclaredVar = rNodeDeclaredVar ? rNodeDeclaredVar.flatMap(this.extractVarNames) : [];
+                    //if (fromNode._id === 1) console.log(`Node ${rNode._id} declares ${rNodeDeclaredVar}`)
                     return rNodeDeclaredVar && rNodeDeclaredVar.includes(variable);
                 });
 
-                //console.log(`\nChecking ${fromNode._id} → ${toNode._id} for variable '${variable}'`);
+                //if (fromNode._id === 1) console.log(`\nChecking ${fromNode._id} → ${toNode._id} for variable '${variable}'`);
 
                 let def_use = sourceNodeDeclaredVar && sourceNodeDeclaredVar.includes(variable) && destNodeUsedVars.includes(variable);
                 let use_def = sourceNodeUsedVars.includes(variable) && destNodeDeclaredVar && destNodeDeclaredVar.includes(variable);

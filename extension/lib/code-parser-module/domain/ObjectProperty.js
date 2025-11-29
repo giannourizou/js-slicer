@@ -24,7 +24,7 @@ class ObjectProperty {
         let varArray = [];
         
         if (this._value?.getUsedVariableNames) {
-            return varArray.concat(this._value.getUsedVariableNames());
+            varArray = varArray.concat(this._value.getUsedVariableNames());
         } else if (this._value?._name) {
             varArray.push(this._value._name);
         }

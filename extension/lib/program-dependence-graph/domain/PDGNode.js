@@ -39,5 +39,14 @@ class PDGNode {
     set edges(value) {
         this._edges = value;
     }
+    
+    hasEdgeTo(targetNodeId) {
+        let result = this.edges.filter((e) => e.target === targetNodeId);
+        if (result && result.length > 0) {
+            return true;
+        }
+        return false;
+    }
+
 }
 module.exports = PDGNode;
