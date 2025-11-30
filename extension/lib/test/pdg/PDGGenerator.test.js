@@ -52,7 +52,7 @@ it("PDG of sequential statements", () => {
     expectHasEdge(pdg, entryNode._id, 7);
 
     // DDG edges
-    expectHasEdge(1,2);
+    expectHasEdge(pdg,1,2);
     expectHasEdge(pdg,4,6); 
     expectHasEdge(pdg,3,5);
     expectHasEdge(pdg,3,6);  

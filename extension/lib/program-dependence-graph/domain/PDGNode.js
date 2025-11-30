@@ -1,10 +1,12 @@
 class PDGNode {
 
-    constructor(id,executionCondition,statement,edges) {
+    constructor(id, executionCondition, statement, edges, controlEdges, dataEdges) {
         this._id = id;
         this._executionCondition = executionCondition
         this._statement = statement;
         this._edges = edges;
+        this._controlEdges = controlEdges;
+        this._dataEdges = dataEdges;
     }
 
 
@@ -39,6 +41,23 @@ class PDGNode {
     set edges(value) {
         this._edges = value;
     }
+
+    get controlEdges() {
+        return this._controlEdges;
+    }
+
+    set controlEdges(value) {
+        this._controlEdges = value;
+    }
+
+    get dataEdges() {
+        return this._dataEdges;
+    }
+
+    set dataEdges(value) {
+        this._dataEdges = value;
+    }
+
     
     hasEdgeTo(targetNodeId) {
         let result = this.edges.filter((e) => e.target === targetNodeId);
