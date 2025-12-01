@@ -214,7 +214,11 @@ class CFG {
         let ddgEdges = [];
         this.getTopologies()
             .filter((topology) => topology._source === fromNode._id)
-            .forEach((topology) => {                
+            .forEach((topology) => {       
+                let toNode = this.getNodeById(topology._target);
+                if (fromNode._id === toNode._id && fromNode._statement instanceof VariableDeclaration) {
+                    return;
+                }         
                 this.getVariableDependency(fromNode, this.getNodeById(topology._target), topology._paths).forEach((vd) => {
                     //Add DDGEdge if it does not exist already
                     if (

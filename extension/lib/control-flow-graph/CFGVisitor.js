@@ -18,6 +18,8 @@ class CFGVisitor {
         this._id = 1;
         this._parentStack = new Stack();
         this.nesting = 0;
+        this.scopeCounter = 0;
+        this.scope = 0;
         this._visualizer = new CFGVisualizer();
         this._returnExitStack = [];
         this._breakAndContinueNodeRecords = [];
@@ -74,6 +76,10 @@ class CFGVisitor {
 
     visitBlockStatement(block) {
         this.nesting++;
+        let prevScope = this.scope;
+        this.scopeCounter++;
+        this.scope = this.scopeCounter;
+
         let exitNodes = null;
 
         let stmts = block._stmts;
@@ -99,6 +105,7 @@ class CFGVisitor {
         }
 
         this.nesting--;
+        this.scope = prevScope;
 
         let result = stmts.length > 0 ? this._parentStack.pop() : null;
         return result;
@@ -544,6 +551,7 @@ class CFGVisitor {
         let node = new CFGNode(this._id++, null, stmt, [], null);
 
         node.nesting = this.nesting;
+        node.scope = this.scope;
         this.cfg.addNode(node);
         this.connectNodeToCFG(node);
     }
@@ -649,7 +657,7 @@ class CFGVisitor {
     }
 
     visitLogicalExpression(stmt, nesting) {
-        let visitor = new CompositeConditionsVisitor(this._id, this._cfg, nesting);
+        let visitor = new CompositeConditionsVisitor(this._id, this._cfg, nesting, this.scope);
         let decisionNode = visitor.visit(stmt, true);
         this._id = visitor._id;
         return decisionNode;

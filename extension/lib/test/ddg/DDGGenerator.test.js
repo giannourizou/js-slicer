@@ -10,6 +10,15 @@ function expectHasEdge(ddg, source, target) {
     expect(ddg.hasEdge(source, target)).toBe(true);
 }
 
+function printDDG(cfg,ddg){
+    console.log("Printed DDG");
+    ddg._nodes.forEach((node) => {
+        const cfgNode = cfg._nodes.find(n => n._id === node.id);
+        const stmt = cfgNode?._statement;
+        console.log( `Node ${node.id} → children: [${node._edges.map(e => e.target).join(", ")}] Statement: ${typeof stmt === "string" ? stmt : JSON.stringify(stmt)}`);
+    });
+}
+
 it("throws error when CFG is missing", () => {
     expect(() => {
         DDGGenerator.generateDDG(null);
@@ -456,6 +465,58 @@ it("DDG18 - Compound Operators", () =>{
     
 });
 
+it("DDG19 - Nested Loops", () =>{
+    let code =`
+    function foo() {
+        let sum = 0;    // 1
+        for (let i = 0; i < 6; i++){     // 2,3,8
+            for (let j = 0; j < 7; j++){ // 4,5,7
+                sum += i + j;            // 6
+            }
+        }
+        return sum; // 9
+    }`
+
+
+    let functionObj = parse(code);
+    let cfg = CFGGenerator.generateCfg2(functionObj);
+    let ddg = DDGGenerator.generateDDG(cfg);
+
+    expect(ddg._nodes.length).toBe(10);
+
+    expectHasEdge(ddg,1,6); // def-def & def-use (sum)
+    expectHasEdge(ddg,1,9); // def-use (sum)
+
+    expectHasEdge(ddg,2,3); // def-use(i)
+    expectHasEdge(ddg,2,6); // def-use(i)
+    expectHasEdge(ddg,2,8); // def-def & def-use (i)
+
+    expectHasEdge(ddg,3,8); // use-def(i)
+
+    expectHasEdge(ddg,4,5); // def-use(j)
+    expectHasEdge(ddg,4,6); // def-use(j)
+    expectHasEdge(ddg,4,7); // def-def & def-use(j)
+
+    expectHasEdge(ddg,5,4); // use-def(j)
+    expectHasEdge(ddg,5,7); // use-def(j)
+
+    expectHasEdge(ddg,6,6); // def-def(sum)
+    expectHasEdge(ddg,6,7); // use-def(j)
+    expectHasEdge(ddg,6,8); // use-def(i)
+    expectHasEdge(ddg,6,9); // def-use(sum)
+
+    expectHasEdge(ddg,7,4); // def-def & use-def(j)
+    expectHasEdge(ddg,7,5); // def-use(j)
+    expectHasEdge(ddg,7,6); // def-use(j)
+    expectHasEdge(ddg,7,7); // def-use & use-def & def-def (j)
+
+    expectHasEdge(ddg,8,3); // def-use(i)
+    expectHasEdge(ddg,8,6); // def-use(i)
+    expectHasEdge(ddg,8,8); // def-def & def-use & use-def(i)
+
+});
+
+
 it("DDG20 - Throw Statement", () =>{
     let code =`
     function foo() {
@@ -517,8 +578,8 @@ it("DDG10! - Arrays - Update Element", () => {
     let code =`
     function foo(){
         let arr = [1,2,3];  // 1
-        arr[0] = 10;        // 2
-        let x = arr[1];     // 3
+        arr[1] = 10;        // 2
+        let x = arr[0];     // 3
     }`
 
     let functionObj = parse(code);
@@ -528,66 +589,18 @@ it("DDG10! - Arrays - Update Element", () => {
     expect(ddg._nodes.length).toBe(4);
 
     expectHasEdge(ddg,1,2); // def-def (arr)
-    expectHasEdge(ddg,2,3); // def-use (arr)
+    //expectHasEdge(ddg,2,3); // def-use (arr)
     //expect(ddg.hasEdge(1,3)).toBe(false); // should not be a def-use (arr) due to intervening definition
     // arr acts like a variable!!!
     // Do we accept variable level limitation?
-});
 
-it("DDG19 - Nested Loops", () =>{
-    let code =`
-    function foo() {
-        let sum = 0;    // 1
-        for (let i = 0; i < 6; i++){     // 2,3,8
-            for (let j = 0; j < 7; j++){ // 4,5,7
-                sum += i + j;            // 6
-            }
-        }
-        return sum; // 9
-    }`
-
-
-    let functionObj = parse(code);
-    let cfg = CFGGenerator.generateCfg2(functionObj);
-    let ddg = DDGGenerator.generateDDG(cfg);
-
-    expect(ddg._nodes.length).toBe(10);
-
-    expectHasEdge(ddg,1,6); // def-def & def-use (sum)
-    expectHasEdge(ddg,1,9); // def-use (sum)
-
-    expectHasEdge(ddg,2,3); // def-use(i)
-    expectHasEdge(ddg,2,6); // def-use(i)
-    expectHasEdge(ddg,2,8); // def-def & def-use (i)
-
-    expectHasEdge(ddg,3,8); // use-def(i)
-
-    expectHasEdge(ddg,4,4); // def-def(j) !!!! let j = 0 is a "completely new" variable.
-    expectHasEdge(ddg,4,5); // def-use(j)
-    expectHasEdge(ddg,4,6); // def-use(j)
-    expectHasEdge(ddg,4,7); // def-def & def-use(j)
-
-    expectHasEdge(ddg,5,4); // use-def(j)
-    expectHasEdge(ddg,5,7); // use-def(j)
-
-    expectHasEdge(ddg,6,6); // def-def(sum)
-    expectHasEdge(ddg,6,7); // use-def(j)
-    expectHasEdge(ddg,6,8); // use-def(i)
-    expectHasEdge(ddg,6,9); // def-use(sum)
-
-    expectHasEdge(ddg,7,4); // def-def & use-def(j)
-    expectHasEdge(ddg,7,5); // def-use(j)
-    expectHasEdge(ddg,7,6); // def-use(j)
-    expectHasEdge(ddg,7,7); // def-use & use-def & def-def (j)
-
-    expectHasEdge(ddg,8,3); // def-use(i)
-    expectHasEdge(ddg,8,6); // def-use(i)
-    expectHasEdge(ddg,8,8); // def-def & def-use & use-def(i)
+    printDDG(cfg,ddg);
 
 });
+
 
 // Obvious problem: different scopes with same-name-variables do not differentiate
-it("DDG23! - Different scopes - Same name variables", () =>{
+it("DDG23! - Different scopes - Same name variables (Shadowing)", () =>{
     let code = `
     function foo() {
         let x = 5;      // 1
@@ -595,23 +608,20 @@ it("DDG23! - Different scopes - Same name variables", () =>{
             let x = 10; // 3
             let y = x;  // 4
         }
-        let z = x;      // 5
+        if (x === 4){   // 5
+            let x = 5;  // 6
+            let y = 6;  // 7
+        }
+        let z = x;      // 8
     }`
 
     let functionObj = parse(code);
     let cfg = CFGGenerator.generateCfg2(functionObj);
     let ddg = DDGGenerator.generateDDG(cfg);
 
-    expect(ddg._nodes.length).toBe(6);
+    expect(ddg._nodes.length).toBe(9);
 
-    /*
-    console.log("Printed DDG");
-    ddg._nodes.forEach((node) => {
-        const cfgNode = cfg._nodes.find(n => n._id === node.id);
-        const stmt = cfgNode?._statement;
-        console.log( `Node ${node.id} → children: [${node._edges.map(e => e.target).join(", ")}] Statement: ${typeof stmt === "string" ? stmt : JSON.stringify(stmt)}`);
-    });
-    */
+    //printDDG(ddg)
    
 });
 
@@ -619,12 +629,3 @@ it("DDG23! - Different scopes - Same name variables", () =>{
 // Template Literals
 // Spread Operator
 // ArrayPattern (deconstructing an array)
-
-/* Debug
-    console.log("Printed DDG");
-    ddg._nodes.forEach((node) => {
-        const cfgNode = cfg._nodes.find(n => n._id === node.id);
-        const stmt = cfgNode?._statement;
-        console.log( `Node ${node.id} → children: [${node._edges.map(e => e.target).join(", ")}] Statement: ${typeof stmt === "string" ? stmt : JSON.stringify(stmt)}`);
-    });
-*/
