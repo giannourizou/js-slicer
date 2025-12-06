@@ -594,8 +594,29 @@ it("DDG10! - Arrays - Update Element", () => {
     // arr acts like a variable!!!
     // Do we accept variable level limitation?
 
-    printDDG(cfg,ddg);
+    //printDDG(cfg,ddg);
 
+});
+
+
+it("DDG23", () => {
+    let code = `
+    function foo(){
+        let x = 4;                  // 1
+        while (x > 2) {             // 2
+            for(let j=0; j<9; j++) { // 3,4,6
+                console.log(x,j);    // 5
+            }
+            x--;                    // 7
+        }
+    }
+    `;
+
+    let functionObj = parse(code);
+    let cfg = CFGGenerator.generateCfg2(functionObj);
+    let ddg = DDGGenerator.generateDDG(cfg);
+
+    //printDDG(cfg,ddg);
 });
 
 /*

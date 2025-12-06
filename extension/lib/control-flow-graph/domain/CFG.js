@@ -2,13 +2,9 @@ const FDTNode = require("../../forward-dominance-tree/domain/FDTNode");
 const FDTEdge = require("../../forward-dominance-tree/domain/FDTEdge");
 const FDT = require("../../forward-dominance-tree/domain/FDT");
 const Graph = require("../../utils/graphUtils");
-const AssignmentStatement = require("../../code-parser-module/domain/AssignmentStatement");
 const VariableDeclaration = require("../../code-parser-module/domain/VariableDeclaration");
-const UpdateExpression = require("../../code-parser-module/domain/UpdateExpression");
-const FunctionCall = require("../../code-parser-module/domain/FunctionCall");
 const DDGEdge = require("../../data-dependence-graph/domain/DDGEdge");
 const _ = require("lodash");
-const Identifier = require("../../code-parser-module/domain/Identifier");
 
 
 class CFG {
@@ -241,14 +237,10 @@ class CFG {
         let sourceNodeUsedVars = fromNode._statement.getUsedVariableNames();
         let destNodeUsedVars = toNode._statement.getUsedVariableNames();
 
-        let sourceNodeDeclaredVar =
-            fromNode._statement instanceof AssignmentStatement || fromNode._statement instanceof VariableDeclaration || fromNode._statement instanceof UpdateExpression || fromNode._statement instanceof FunctionCall
-                ? fromNode._statement.getDefinedVariable()
-                : undefined;
-        let destNodeDeclaredVar =
-            toNode._statement instanceof AssignmentStatement || toNode._statement instanceof VariableDeclaration || toNode._statement instanceof UpdateExpression || toNode._statement instanceof FunctionCall
-                ? toNode._statement.getDefinedVariable()
-                : undefined;
+        let sourceNodeDeclaredVar = typeof fromNode._statement.getDefinedVariable === "function" ?
+            fromNode._statement.getDefinedVariable() : undefined;
+        let destNodeDeclaredVar = typeof toNode._statement.getDefinedVariable === "function" ?
+            toNode._statement.getDefinedVariable() : undefined;
 
         sourceNodeDeclaredVar = sourceNodeDeclaredVar ? sourceNodeDeclaredVar.flatMap(this.extractVarNames) : [];
         destNodeDeclaredVar = destNodeDeclaredVar ? destNodeDeclaredVar.flatMap(this.extractVarNames) : [];
@@ -282,17 +274,15 @@ class CFG {
                     .filter((nodeId) => nodeId !== fromNode._id && nodeId !== toNode._id)
                     .map((nodeId) => this.getNodeById(nodeId));
                 let hasInterveningDefinition = remainingNodes.some((rNode) => {
-                    let rNodeDeclaredVar =
-                        rNode._statement instanceof AssignmentStatement || rNode._statement instanceof VariableDeclaration || rNode._statement instanceof UpdateExpression || rNode._statement instanceof FunctionCall
-                            ? rNode._statement.getDefinedVariable()
-                            : undefined;
+                    let rNodeDeclaredVar = typeof rNode._statement.getDefinedVariable === "function" ?
+                        rNode._statement.getDefinedVariable() : undefined;
                     rNodeDeclaredVar = rNodeDeclaredVar ? rNodeDeclaredVar.flatMap(this.extractVarNames) : [];
-                    //if (fromNode._id === 1) console.log(`Node ${rNode._id} declares ${rNodeDeclaredVar}
+                    //console.log(`Node ${rNode._id} declares ${rNodeDeclaredVar}
  
                     return rNodeDeclaredVar && rNodeDeclaredVar.includes(variable);
                 });
 
-                //if (fromNode._id === 1) console.log(`\nChecking ${fromNode._id} → ${toNode._id} for variable '${variable}'`);
+                //console.log(`\nChecking ${fromNode._id} → ${toNode._id} for variable '${variable}'`);
 
                 let def_use = sourceNodeDeclaredVar && sourceNodeDeclaredVar.includes(variable) && destNodeUsedVars.includes(variable);
                 let use_def = sourceNodeUsedVars.includes(variable) && destNodeDeclaredVar && destNodeDeclaredVar.includes(variable);
