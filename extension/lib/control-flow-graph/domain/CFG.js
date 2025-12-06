@@ -226,6 +226,7 @@ class CFG {
                             (edge) => edge._source === fromNode._id && edge._target === topology._target && vd === edge._dependantVariable
                         )
                     ) {
+                        //console.log(`Creating edge from node ${fromNode._id} to node ${toNode._id}`);
                         ddgEdges.push(new DDGEdge(fromNode._id, topology._target, vd));
                     }
                 });
@@ -258,6 +259,7 @@ class CFG {
         if (sourceNodeDeclaredVar) allVars = allVars.concat(sourceNodeDeclaredVar);
         if (destNodeDeclaredVar) allVars = allVars.concat(destNodeDeclaredVar);
         allVars = _.uniq(allVars);
+        //console.log(allVars);
 
         let variableDependencyList = [];
         /*
@@ -285,7 +287,8 @@ class CFG {
                             ? rNode._statement.getDefinedVariable()
                             : undefined;
                     rNodeDeclaredVar = rNodeDeclaredVar ? rNodeDeclaredVar.flatMap(this.extractVarNames) : [];
-                    //if (fromNode._id === 1) console.log(`Node ${rNode._id} declares ${rNodeDeclaredVar}`)
+                    //if (fromNode._id === 1) console.log(`Node ${rNode._id} declares ${rNodeDeclaredVar}
+ 
                     return rNodeDeclaredVar && rNodeDeclaredVar.includes(variable);
                 });
 
@@ -313,7 +316,6 @@ class CFG {
         if (item?.getUsedVariableNames) {names = names.concat(item.getUsedVariableNames().flatMap(this.extractVarNames));}
         return names;
     }
-
 }
 
 module.exports = CFG;

@@ -58,9 +58,16 @@ class PDGNode {
         this._dataEdges = value;
     }
 
-    
-    hasEdgeTo(targetNodeId) {
-        let result = this.edges.filter((e) => e.target === targetNodeId);
+    hasControlEdgeTo(targetNodeId) {
+        let result = this.controlEdges.filter((e) => e.target === targetNodeId);
+        if (result && result.length > 0) {
+            return true;
+        }
+        return false;
+    }
+
+    hasDataEdgeTo(targetNodeId) {
+        let result = this.dataEdges.filter((e) => e.target === targetNodeId);
         if (result && result.length > 0) {
             return true;
         }

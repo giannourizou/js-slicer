@@ -12,12 +12,20 @@ class PDG {
         this._nodes = value;
     }
 
-    hasEdge(from, to) {
+    hasControlEdge(from, to) {
         let fromNode = this.getNodeById(from);
         if (!fromNode) {
             return false;
         }
-        return fromNode.hasEdgeTo(to);
+        return fromNode.hasControlEdgeTo(to);
+    }
+
+    hasDataEdge(from, to) {
+        let fromNode = this.getNodeById(from);
+        if (!fromNode) {
+            return false;
+        }
+        return fromNode.hasDataEdgeTo(to);
     }
 
     getNodeById(id) {

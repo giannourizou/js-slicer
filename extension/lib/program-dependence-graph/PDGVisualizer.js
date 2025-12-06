@@ -40,8 +40,8 @@ class PDGVisualizer {
                 digraph += `\t"${node._id}" [label="ENTRY", shape=oval];\n`;
             } else if (node._statement) {
                 label = node._statement.asText();
-                digraph += `\t"${node._id}" [label="${label}"];\n`;
-                // digraph += `\t"${node._id}" [label="${node._id}"];\n`; // Show just the node id
+                //digraph += `\t"${node._id}" [label="${label}"];\n`;
+                digraph += `\t"${node._id}" [label="${node._id}"];\n`; // Show just the node id
             } else {
                 digraph += `\t"${node._id}" [label="EXIT", shape=oval];\n`;
             }
