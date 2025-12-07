@@ -559,6 +559,163 @@ it("PDG15", () => {
 });
 
 
+// Accumulator in loop
+it("PDG16", () => {
+    let code = `
+    function foo() {
+        let sum = 0;  // 1
+        for (let i=0; i<10; i++){ // 2,3,5
+            sum += i; // 4
+        }
+        console.log(sum); // 6
+    }
+    `;
+
+    let functionObj = parse(code);
+    let cfg = CFGGenerator.generateCfg2(functionObj);
+    let cdg = CDGGenerator.generateCDG(cfg);
+    let ddg = DDGGenerator.generateDDG(cfg);
+    let pdg = PDGGenerator.generatePDG(cdg,ddg);
+    let entryNode = pdg._nodes.find(n => n._id === CDGNodeNames.ENTRY);
+    
+
+    expectHasControlEdge(pdg, entryNode._id, 1);
+    expectHasControlEdge(pdg, entryNode._id, 2);
+    expectHasControlEdge(pdg, entryNode._id, 3);
+    expectHasControlEdge(pdg, entryNode._id, 6);
+    expectHasControlEdge(pdg, entryNode._id, 7);
+    expectHasControlEdge(pdg, 3, 4);
+    expectHasControlEdge(pdg, 3, 5);
+
+    expectHasDataEdge(pdg, 1, 4);
+    expectHasDataEdge(pdg, 1, 6);
+    expectHasDataEdge(pdg, 2, 4);
+    expectHasDataEdge(pdg, 2, 3);
+    expectHasDataEdge(pdg, 2, 5);
+    expectHasDataEdge(pdg, 3, 5);
+    expectHasDataEdge(pdg, 4, 4);
+    expectHasDataEdge(pdg, 4, 5);
+    expectHasDataEdge(pdg, 4, 6);
+    expectHasDataEdge(pdg, 5, 4);
+    expectHasDataEdge(pdg, 5, 3);
+    expectHasDataEdge(pdg, 5, 5);
+
+    showPDG(pdg, "PDGTest16");
+});
+
+
+// Return Statement
+it("PDG17", () => {
+    let code = `
+    function foo() {
+        let x = 5;       // 1
+        if (x > 3) {     // 2
+            return x;    // 3
+        }
+        let y = 10;      // 4
+        return y;        // 5
+    }
+    `;
+
+    let functionObj = parse(code);
+    let cfg = CFGGenerator.generateCfg2(functionObj);
+    let cdg = CDGGenerator.generateCDG(cfg);
+    let ddg = DDGGenerator.generateDDG(cfg);
+    let pdg = PDGGenerator.generatePDG(cdg,ddg);
+    let entryNode = pdg._nodes.find(n => n._id === CDGNodeNames.ENTRY);
+    
+    expectHasControlEdge(pdg, entryNode._id, 1);
+    expectHasControlEdge(pdg, entryNode._id, 2);
+    expectHasControlEdge(pdg, entryNode._id, 6);
+    expectHasControlEdge(pdg, 2, 3);
+    expectHasControlEdge(pdg, 2, 4);
+    expectHasControlEdge(pdg, 2, 5);
+
+    expectHasDataEdge(pdg, 1, 2);
+    expectHasDataEdge(pdg, 1, 3);
+    expectHasDataEdge(pdg, 4, 5);
+
+    showPDG(pdg, "PDGTest17");
+});
+
+
+// Continue statement
+it("PDG18", () => {
+    let code = `
+    function foo() {
+        for (let i = 0; i < 5; i++) {  // 1,2,6
+            if (i % 2 === 1) {     // 3
+                continue;          // 4
+            }
+            console.log(i)  // 5
+        }
+        return i; // 7
+    }
+    `;
+
+    let functionObj = parse(code);
+    let cfg = CFGGenerator.generateCfg2(functionObj);
+    let cdg = CDGGenerator.generateCDG(cfg);
+    let ddg = DDGGenerator.generateDDG(cfg);
+    let pdg = PDGGenerator.generatePDG(cdg,ddg);
+    let entryNode = pdg._nodes.find(n => n._id === CDGNodeNames.ENTRY);
+    
+    expectHasControlEdge(pdg, entryNode._id, 1);
+    expectHasControlEdge(pdg, entryNode._id, 2);
+    expectHasControlEdge(pdg, entryNode._id, 7);
+    expectHasControlEdge(pdg, entryNode._id, 8);
+    expectHasControlEdge(pdg, 2, 3);
+    expectHasControlEdge(pdg, 2, 6);
+    expectHasControlEdge(pdg, 3, 4);
+    expectHasControlEdge(pdg, 3, 5);
+    
+    expectHasDataEdge(pdg, 1, 2);
+    expectHasDataEdge(pdg, 1, 3);
+    expectHasDataEdge(pdg, 1, 5);
+    expectHasDataEdge(pdg, 1, 6);
+    expectHasDataEdge(pdg, 1, 7);
+    expectHasDataEdge(pdg, 2, 6);
+    expectHasDataEdge(pdg, 3, 6);
+    expectHasDataEdge(pdg, 5, 6);
+    expectHasDataEdge(pdg, 6, 2);
+    expectHasDataEdge(pdg, 6, 3);
+    expectHasDataEdge(pdg, 6, 5);
+    expectHasDataEdge(pdg, 6, 6);
+    expectHasDataEdge(pdg, 6, 7);
+
+    showPDG(pdg, "PDGTest18");
+});
+
+
+/*
+// Try-Catch-Finally Statement
+// Control edges completely wrong
+it("Try-Catch-Finally Statement", () => {
+    let code = `
+    function foo() {
+        let x = 5;          // 1
+        try {
+            x = x * 2;      // 2
+            throw "error";  // 3
+        } catch (e) {
+            x = 0;          // 4
+        } finally {
+            x = x - 1;      // 5
+        }
+        return x;           // 6
+    }
+    `;
+
+    let functionObj = parse(code);
+    let cfg = CFGGenerator.generateCfg2(functionObj);
+    let cdg = CDGGenerator.generateCDG(cfg);
+    let ddg = DDGGenerator.generateDDG(cfg);
+    let pdg = PDGGenerator.generatePDG(cdg,ddg);
+    let entryNode = pdg._nodes.find(n => n._id === CDGNodeNames.ENTRY);
+
+    showPDG(pdg, "PDGTestY");
+});
+*/
 
 /* Do-while Loop
 // CDG edge entry -> 2 is missing

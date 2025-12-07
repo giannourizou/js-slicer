@@ -391,3 +391,26 @@ it("CDG with Switch & Break Statement ", () => {
     expectHasEdge(cdg, 3, 8); // default case
 
 });
+
+
+/*
+// Bug: Entry node doesn't connect ENTRY to (first iteration) of node 2
+// Since there's an edge (3->2) for node 2 it doesn't connect to the entry node
+it("Do-while-loop", () => {
+    let code = `
+    function foo(){
+        let n = 1;       // 1
+        do {
+            n *= 2;      // 2
+        } while (n<40);  // 3
+        console.log(n);  // 4
+    }
+    `;
+
+    let functionObj = parse(code);
+    let cfg = CFGGenerator.generateCfg2(functionObj);
+    let cdg = CDGGenerator.generateCDG(cfg);
+    printCDG(cfg,cdg);
+
+});
+*/
