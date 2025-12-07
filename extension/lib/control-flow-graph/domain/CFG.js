@@ -269,6 +269,11 @@ class CFG {
        
         for (let i in allVars) {
             let variable = allVars[i];
+
+            if (toNode._statement instanceof VariableDeclaration) {
+                if (destNodeDeclaredVar.includes(variable)) continue;
+            }
+
             let nodesAreDataDependent = paths.some((path) => {
                 let remainingNodes = path
                     .filter((nodeId) => nodeId !== fromNode._id && nodeId !== toNode._id)

@@ -19,6 +19,7 @@ function printDDG(cfg,ddg){
     });
 }
 
+
 it("throws error when CFG is missing", () => {
     expect(() => {
         DDGGenerator.generateDDG(null);
@@ -465,6 +466,7 @@ it("DDG18 - Compound Operators", () =>{
     
 });
 
+
 it("DDG19 - Nested Loops", () =>{
     let code =`
     function foo() {
@@ -483,6 +485,7 @@ it("DDG19 - Nested Loops", () =>{
     let ddg = DDGGenerator.generateDDG(cfg);
 
     expect(ddg._nodes.length).toBe(10);
+    printDDG(cfg,ddg);
 
     expectHasEdge(ddg,1,6); // def-def & def-use (sum)
     expectHasEdge(ddg,1,9); // def-use (sum)
@@ -497,7 +500,6 @@ it("DDG19 - Nested Loops", () =>{
     expectHasEdge(ddg,4,6); // def-use(j)
     expectHasEdge(ddg,4,7); // def-def & def-use(j)
 
-    expectHasEdge(ddg,5,4); // use-def(j)
     expectHasEdge(ddg,5,7); // use-def(j)
 
     expectHasEdge(ddg,6,6); // def-def(sum)
@@ -505,7 +507,6 @@ it("DDG19 - Nested Loops", () =>{
     expectHasEdge(ddg,6,8); // use-def(i)
     expectHasEdge(ddg,6,9); // def-use(sum)
 
-    expectHasEdge(ddg,7,4); // def-def & use-def(j)
     expectHasEdge(ddg,7,5); // def-use(j)
     expectHasEdge(ddg,7,6); // def-use(j)
     expectHasEdge(ddg,7,7); // def-use & use-def & def-def (j)
@@ -515,6 +516,7 @@ it("DDG19 - Nested Loops", () =>{
     expectHasEdge(ddg,8,8); // def-def & def-use & use-def(i)
 
 });
+
 
 
 it("DDG20 - Throw Statement", () =>{
@@ -615,8 +617,10 @@ it("DDG23", () => {
     let functionObj = parse(code);
     let cfg = CFGGenerator.generateCfg2(functionObj);
     let ddg = DDGGenerator.generateDDG(cfg);
-
-    //printDDG(cfg,ddg);
+    // edw exoume to problem
+    // detecting 4->3 kai 6->3 for some reason
+    // solved for now
+    printDDG(cfg,ddg);
 });
 
 /*

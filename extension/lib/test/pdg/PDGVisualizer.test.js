@@ -508,10 +508,7 @@ it("PDG14", () => {
 });
 
 
-
-/*
 // Nested loops
-// Should remove variable declarations of the same variable
 it("PDG15", () => {
     let code = `
     function foo(){
@@ -548,11 +545,9 @@ it("PDG15", () => {
     expectHasDataEdge(pdg, 3, 4);
     expectHasDataEdge(pdg, 3, 5);
     expectHasDataEdge(pdg, 3, 6);
-    //expectHasDataEdge(pdg, 4, 3); // !!!
     expectHasDataEdge(pdg, 4, 6);
     expectHasDataEdge(pdg, 5, 6);
     expectHasDataEdge(pdg, 5, 7);
-    //expectHasDataEdge(pdg, 6, 3); // !!! 
     expectHasDataEdge(pdg, 6, 4);
     expectHasDataEdge(pdg, 6, 5);
     expectHasDataEdge(pdg, 6, 6);
@@ -562,7 +557,7 @@ it("PDG15", () => {
 
     showPDG(pdg, "PDGTest15");
 });
-*/
+
 
 
 /* Do-while Loop
