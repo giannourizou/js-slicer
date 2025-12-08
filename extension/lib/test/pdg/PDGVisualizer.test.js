@@ -23,8 +23,6 @@ function parse(str) {
     return Parser.parse(str.split("\n"));
 }
 
-/* BASIC STRUCTURE TESTS*/
-
 // Empty Body Function
 it("PDG0", () => {
     let code = `
@@ -716,7 +714,6 @@ it("PDG19", () => {
     let pdg = PDGGenerator.generatePDG(cdg,ddg);
     let entryNode = pdg._nodes.find(n => n._id === CDGNodeNames.ENTRY);
     
-    
     expectHasControlEdge(pdg, entryNode._id, 1);
     expectHasControlEdge(pdg, entryNode._id, 2);
     expectHasControlEdge(pdg, entryNode._id, 3);
@@ -741,6 +738,39 @@ it("PDG19", () => {
     expectHasDataEdge(pdg, 9, 10);
     
     showPDG(pdg, "PDGTest19");
+});
+
+
+// Dead Code
+it("PDG20", () => {
+    let code = `
+    function foo() {
+        let x = 5;       // 1
+        if (x<3){        // 2
+            let y = 10;  // 3 
+            return y;    // 4 
+            x = 50;      // 5
+        }
+    }
+    `;
+
+    let functionObj = parse(code);
+    let cfg = CFGGenerator.generateCfg2(functionObj);
+    let cdg = CDGGenerator.generateCDG(cfg);
+    let ddg = DDGGenerator.generateDDG(cfg);
+    let pdg = PDGGenerator.generatePDG(cdg,ddg);
+    let entryNode = pdg._nodes.find(n => n._id === CDGNodeNames.ENTRY);
+
+    expectHasControlEdge(pdg, entryNode._id, 1);
+    expectHasControlEdge(pdg, entryNode._id, 2);
+    expectHasControlEdge(pdg, entryNode._id, 5); // node 5 === EXIT node
+    expectHasControlEdge(pdg, 2, 3);
+    expectHasControlEdge(pdg, 2, 4);
+
+    expectHasDataEdge(pdg, 1, 2);
+    expectHasDataEdge(pdg, 3, 4);
+
+    showPDG(pdg, "PDGTest20");
 });
 
 /*
