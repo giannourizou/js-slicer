@@ -63,14 +63,17 @@ const getCDGNodeEdges = (cfg, nodeX, immediateDomMap) => {
 
     nodeX._edges.forEach(edge => {
         let yID = edge._targetId;
-
         if (!postDominates(yID, nodeX._id, immediateDomMap)) {
-            edges.push(new CDGEdge(nodeX._id, yID, edge._condition));
+            if (!edges.some((edge) => edge._source === nodeX._id && edge._target === yID)){
+                edges.push(new CDGEdge(nodeX._id, yID, edge._condition));
+            }
 
             // Find further control dependent nodes
             let CDNodes = findCDNodes(cfg, nodeX._id, yID, immediateDomMap, edge._condition);
             CDNodes.forEach((dep) => {
-                edges.push(new CDGEdge(nodeX._id, dep.nodeId, dep.condition));
+                if (!edges.some((edge) => edge.source === nodeX._id && edge._target === dep.nodeId)){
+                    edges.push(new CDGEdge(nodeX._id, dep.nodeId, dep.condition));
+                }
             });
         }
     });

@@ -687,6 +687,62 @@ it("PDG18", () => {
 });
 
 
+// Switch case - Fallthrough
+it("PDG19", () => {
+    let code = `
+    function foo() {
+        let x = 2;            // 1
+        let result = 0;       // 2
+        switch (x) {          // 3
+            case 1:
+                result = 10;  // 4
+                break;        // 5
+            case 2:
+                result -= 4;  // 6
+            case 3:
+                result += 10; // 7
+                break;        // 8
+            default:
+                result = 0;   // 9
+        }
+        return result;        // 10
+    }
+    `;
+
+    let functionObj = parse(code);
+    let cfg = CFGGenerator.generateCfg2(functionObj);
+    let cdg = CDGGenerator.generateCDG(cfg);
+    let ddg = DDGGenerator.generateDDG(cfg);
+    let pdg = PDGGenerator.generatePDG(cdg,ddg);
+    let entryNode = pdg._nodes.find(n => n._id === CDGNodeNames.ENTRY);
+    
+    
+    expectHasControlEdge(pdg, entryNode._id, 1);
+    expectHasControlEdge(pdg, entryNode._id, 2);
+    expectHasControlEdge(pdg, entryNode._id, 3);
+    expectHasControlEdge(pdg, entryNode._id, 10);
+    expectHasControlEdge(pdg, entryNode._id, 11);
+
+    expectHasControlEdge(pdg, 3, 4);
+    expectHasControlEdge(pdg, 3, 5);
+    expectHasControlEdge(pdg, 3, 6);
+    expectHasControlEdge(pdg, 3, 7);
+    expectHasControlEdge(pdg, 3, 8);
+    expectHasControlEdge(pdg, 3, 9);
+    
+    expectHasDataEdge(pdg, 1, 3);
+    expectHasDataEdge(pdg, 2, 4);
+    expectHasDataEdge(pdg, 2, 6);
+    expectHasDataEdge(pdg, 2, 7);
+    expectHasDataEdge(pdg, 2, 9);
+    expectHasDataEdge(pdg, 6, 7); // fallthrough
+    expectHasDataEdge(pdg, 4, 10);
+    expectHasDataEdge(pdg, 7, 10);
+    expectHasDataEdge(pdg, 9, 10);
+    
+    showPDG(pdg, "PDGTest19");
+});
+
 /*
 // Try-Catch-Finally Statement
 // Control edges completely wrong
