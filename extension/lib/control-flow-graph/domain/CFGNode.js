@@ -12,6 +12,7 @@ class CFGNode {
         if (parent) this._parents.push(parent);
         this._nesting = 0;
         this._label = id;
+        this._scope = 0;
     }
 
     get label() {
@@ -20,6 +21,14 @@ class CFGNode {
 
     set label(name) {
         this._label = name;
+    }
+
+    get scope() {
+        return this._scope;
+    }
+
+    set scope(value) {
+        this._scope = value;
     }
 
     get nesting() {

@@ -16,7 +16,7 @@ class CompositeConditionsVisitor {
         this._trueEdges = [];
         this._falseEdges = [];
         this._nesting = nesting;
-        this.scope = scope;
+        this._scope = scope;
     }
 
     /**
@@ -349,28 +349,28 @@ class CompositeConditionsVisitor {
         if (this.validBinaryExpressionOperators.includes(stmt._operator)) {
             let node = new CFGNode(this._id++, null, stmt, [], null);
             node._nesting = this._nesting;
-            node.scope = this.scope;
+            node._scope = this._scope;
             this._postOrderNodeQueue.push(node);
         }
     }
     visitFunctionCall(stmt) {
         let node = new CFGNode(this._id++, null, stmt, [], null);
         node._nesting = this._nesting;
-        node._scope = this.scope;
+        node._scope = this._scope;
         this._postOrderNodeQueue.push(node);
     }
 
     visitVariableDeclaration(stmt) {
         let node = new CFGNode(this._id++, null, stmt, [], null);
         node._nesting = this._nesting;
-        node._scope = this.scope;
+        node._scope = this._scope;
         this._postOrderNodeQueue.push(node);
     }
 
     visitLiteral(stmt) {
         let node = new CFGNode(this._id++, null, stmt, [], null);
         node._nesting = this._nesting;
-        node._scope = this.scope;
+        node._scope = this._scope;
         this._postOrderNodeQueue.push(node);
     }
     visitIdentifier(stmt) {
@@ -382,7 +382,7 @@ class CompositeConditionsVisitor {
     visitMemberExpression(stmt) {
         let node = new CFGNode(this._id++, null, stmt, [], null);
         node._nesting = this._nesting;
-        node._scope = this.scope;
+        node._scope = this._scope;
         this._postOrderNodeQueue.push(node);
     }
 }

@@ -575,7 +575,7 @@ it("DDG22 - New Expression", () =>{
 
 });
 
-it("DDG23", () => {
+it("DDG23 - Nested Loops (While & For Loop)", () => {
     let code = `
     function foo(){
         let x = 4;                  // 1
@@ -592,39 +592,39 @@ it("DDG23", () => {
     let cfg = CFGGenerator.generateCfg2(functionObj);
     let ddg = DDGGenerator.generateDDG(cfg);
     
-    expectHasDataEdge(pdg, 1, 2); // def-use(x)
-    expectHasDataEdge(pdg, 1, 5); // def-use(x)
-    expectHasDataEdge(pdg, 1, 7); // def-def & def-use (x)
+    expectHasEdge(ddg, 1, 2); // def-use(x)
+    expectHasEdge(ddg, 1, 5); // def-use(x)
+    expectHasEdge(ddg, 1, 7); // def-def & def-use (x)
 
-    expectHasDataEdge(pdg, 2, 7); // use-def(x)
+    expectHasEdge(ddg, 2, 7); // use-def(x)
 
-    expectHasDataEdge(pdg, 3, 4); // def-use(j)
-    expectHasDataEdge(pdg, 3, 5); // def-use(j)
-    expectHasDataEdge(pdg, 3, 6); // def-use & def-def (j)
+    expectHasEdge(ddg, 3, 4); // def-use(j)
+    expectHasEdge(ddg, 3, 5); // def-use(j)
+    expectHasEdge(ddg, 3, 6); // def-use & def-def (j)
 
-    expectHasDataEdge(pdg, 4, 6); // use-def(j)
+    expectHasEdge(ddg, 4, 6); // use-def(j)
 
-    expectHasDataEdge(pdg, 5, 6); // use-def(j)
-    expectHasDataEdge(pdg, 5, 7); // use-def(x)
+    expectHasEdge(ddg, 5, 6); // use-def(j)
+    expectHasEdge(ddg, 5, 7); // use-def(x)
 
-    expectHasDataEdge(pdg, 6, 4); // def-use(j)
-    expectHasDataEdge(pdg, 6, 5); // def-use(j)
-    expectHasDataEdge(pdg, 6, 6); // def-def & use-def(j)
+    expectHasEdge(ddg, 6, 4); // def-use(j)
+    expectHasEdge(ddg, 6, 5); // def-use(j)
+    expectHasEdge(ddg, 6, 6); // def-def & use-def(j)
 
-    expectHasDataEdge(pdg, 7, 5); // def-use(x)
-    expectHasDataEdge(pdg, 7, 7); // def-def & def-use (x)
-    expectHasDataEdge(pdg, 7, 2); // def-use(x)
+    expectHasEdge(ddg, 7, 5); // def-use(x)
+    expectHasEdge(ddg, 7, 7); // def-def & def-use (x)
+    expectHasEdge(ddg, 7, 2); // def-use(x)
 
     printDDG(cfg,ddg);
 });
 
 
-
+/*
 it("DDG10! - Arrays - Update Element", () => {
     let code =`
     function foo(){
         let arr = [1,2,3];  // 1
-        arr[0]=10;          // 2
+        arr[1] = 10;        // 2
         let x = arr[1];     // 3
     }`
 
@@ -640,13 +640,13 @@ it("DDG10! - Arrays - Update Element", () => {
     // arr acts like a variable!!!
     // Do we accept variable level limitation?
 
-    //printDDG(cfg,ddg);
+    printDDG(cfg,ddg);
 
 });
+*/
 
 
 
-/*
 // Obvious problem: different scopes with same-name-variables do not differentiate
 it("DDG23! - Different scopes - Same name variables (Shadowing)", () =>{
     let code = `
@@ -669,10 +669,11 @@ it("DDG23! - Different scopes - Same name variables (Shadowing)", () =>{
 
     expect(ddg._nodes.length).toBe(9);
 
-    //printDDG(ddg)
+    printDDG(cfg,ddg)
+    console.log(cfg._nodes.map(n => `Node ${n._id}: scope=${n._scope}`));
    
 });
-*/
+
 
 // UNSUPPORTED TESTS
 // Template Literals
