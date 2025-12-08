@@ -575,6 +575,50 @@ it("DDG22 - New Expression", () =>{
 
 });
 
+it("DDG23", () => {
+    let code = `
+    function foo(){
+        let x = 4;                  // 1
+        while (x > 2) {             // 2
+            for(let j=0; j<9; j++) { // 3,4,6
+                console.log(x,j);    // 5
+            }
+            x--;                    // 7
+        }
+    }
+    `;
+
+    let functionObj = parse(code);
+    let cfg = CFGGenerator.generateCfg2(functionObj);
+    let ddg = DDGGenerator.generateDDG(cfg);
+    
+    expectHasDataEdge(pdg, 1, 2); // def-use(x)
+    expectHasDataEdge(pdg, 1, 5); // def-use(x)
+    expectHasDataEdge(pdg, 1, 7); // def-def & def-use (x)
+
+    expectHasDataEdge(pdg, 2, 7); // use-def(x)
+
+    expectHasDataEdge(pdg, 3, 4); // def-use(j)
+    expectHasDataEdge(pdg, 3, 5); // def-use(j)
+    expectHasDataEdge(pdg, 3, 6); // def-use & def-def (j)
+
+    expectHasDataEdge(pdg, 4, 6); // use-def(j)
+
+    expectHasDataEdge(pdg, 5, 6); // use-def(j)
+    expectHasDataEdge(pdg, 5, 7); // use-def(x)
+
+    expectHasDataEdge(pdg, 6, 4); // def-use(j)
+    expectHasDataEdge(pdg, 6, 5); // def-use(j)
+    expectHasDataEdge(pdg, 6, 6); // def-def & use-def(j)
+
+    expectHasDataEdge(pdg, 7, 5); // def-use(x)
+    expectHasDataEdge(pdg, 7, 7); // def-def & def-use (x)
+    expectHasDataEdge(pdg, 7, 2); // def-use(x)
+
+    printDDG(cfg,ddg);
+});
+
+
 
 it("DDG10! - Arrays - Update Element", () => {
     let code =`
@@ -601,27 +645,6 @@ it("DDG10! - Arrays - Update Element", () => {
 });
 
 
-it("DDG23", () => {
-    let code = `
-    function foo(){
-        let x = 4;                  // 1
-        while (x > 2) {             // 2
-            for(let j=0; j<9; j++) { // 3,4,6
-                console.log(x,j);    // 5
-            }
-            x--;                    // 7
-        }
-    }
-    `;
-
-    let functionObj = parse(code);
-    let cfg = CFGGenerator.generateCfg2(functionObj);
-    let ddg = DDGGenerator.generateDDG(cfg);
-    // edw exoume to problem
-    // detecting 4->3 kai 6->3 for some reason
-    // solved for now
-    printDDG(cfg,ddg);
-});
 
 /*
 // Obvious problem: different scopes with same-name-variables do not differentiate
