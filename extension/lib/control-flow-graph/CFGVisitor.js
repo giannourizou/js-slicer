@@ -93,6 +93,7 @@ class CFGVisitor {
             ) {
                 stmt.accept(this);
                 this.nesting--;
+                this.scope = prevScope;
                 return null;
             }
 

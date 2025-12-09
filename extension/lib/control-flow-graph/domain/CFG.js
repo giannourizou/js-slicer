@@ -289,11 +289,22 @@ class CFG {
 
                 //console.log(`\nChecking ${fromNode._id} → ${toNode._id} for variable '${variable}'`);
 
-                let def_use = sourceNodeDeclaredVar && sourceNodeDeclaredVar.includes(variable) && destNodeUsedVars.includes(variable);
+                let def_use = false;
+                if (sourceNodeDeclaredVar && sourceNodeDeclaredVar.includes(variable) && destNodeUsedVars.includes(variable)){
+                    if (fromNode._nesting > toNode._nesting) {   
+                        def_use = !(fromNode._statement instanceof VariableDeclaration); // inner def shouldn't reach outer use
+                    }
+                    else if (fromNode._nesting === toNode._nesting && fromNode._scope !== toNode._scope) {
+                        def_use = this.hasAccessToNode(toNode, fromNode._scope, toNode._scope); 
+                    }else {
+                        def_use = true;
+                    }
+                }
+                
                 let use_def = sourceNodeUsedVars.includes(variable) && destNodeDeclaredVar && destNodeDeclaredVar.includes(variable);
                 let def_def = sourceNodeDeclaredVar && sourceNodeDeclaredVar.includes(variable) && destNodeDeclaredVar && destNodeDeclaredVar.includes(variable);
 
-                //console.log(`def_use: ${def_use}, use_def: ${use_def}, def_def: ${def_def}`);
+                //console.log(`Nodes ${fromNode._id} & ${toNode._id} def_use: ${def_use}, use_def: ${use_def}, def_def: ${def_def}`);
 
                 return !hasInterveningDefinition && (def_use || use_def || def_def);
             });
@@ -304,13 +315,32 @@ class CFG {
     }
 
     extractVarNames = (item) => {
-        if (!item) return [];
         if (typeof item === 'string') return [item];
-
         names = [];
         if (item?.getUsedVariableNames) {names = names.concat(item.getUsedVariableNames().flatMap(this.extractVarNames));}
         return names;
     }
+
+    // Check if node X's variables are accessible from node Y
+    // Based on scope value, by traversing up the scope chain
+    hasAccessToNode(toNode, fromScope, toScope) {
+        let visited = new Set();
+        let curNode = toNode;
+        let curScope = toScope;
+
+        while (curScope !== 0 && !visited.has(curNode._id)) {
+            if (curScope === fromScope) return true;
+            visited.add(curNode._id);
+            curScope = Math.min(...curNode._parents.map(p => p._scope));
+            if (curNode._parents.length > 0) {
+                curNode = curNode._parents.find(p => p._scope === curScope)
+            } else {
+                return false;
+            }
+        }
+        return false;
+    }
+
 }
 
 module.exports = CFG;

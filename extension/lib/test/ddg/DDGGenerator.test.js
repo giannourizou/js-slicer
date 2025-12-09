@@ -119,6 +119,8 @@ it("DDG4 - Assignment Statement with 2+ variables", () => {
     expectHasEdge(ddg,3,4); // def-use
 
 });
+ 
+
 
 it("DDG5 - If/Else Statement", () =>{
     let code = `
@@ -150,6 +152,7 @@ it("DDG5 - If/Else Statement", () =>{
     expectHasEdge(ddg,5,6); // def-use
 
 });
+
 
 it("DDG6 - For Loop Statement", () =>{
     let code = `
@@ -645,10 +648,7 @@ it("DDG10! - Arrays - Update Element", () => {
 });
 */
 
-
-
-// Obvious problem: different scopes with same-name-variables do not differentiate
-it("DDG23! - Different scopes - Same name variables (Shadowing)", () =>{
+it("DDG23 - Different scopes - Same name variables (Shadowing)", () =>{
     let code = `
     function foo() {
         let x = 5;      // 1
@@ -669,9 +669,71 @@ it("DDG23! - Different scopes - Same name variables (Shadowing)", () =>{
 
     expect(ddg._nodes.length).toBe(9);
 
-    printDDG(cfg,ddg)
-    console.log(cfg._nodes.map(n => `Node ${n._id}: scope=${n._scope}`));
-   
+    expectHasEdge(ddg, 1, 2); // def-use(x)
+    expectHasEdge(ddg, 1, 5); // def-use(x)
+    expectHasEdge(ddg, 1, 8); // def-use(x)
+    expectHasEdge(ddg, 3, 4); // def-use(different scope x)
+
+});
+
+
+it("DDG24 - Shadowing - Double nesting", () => {
+    let code = `
+        function foo() {
+            let x = 1;                  // 1
+            if (x>1){                   // 2
+                let x = 2;              // 3
+                if (x>2){               // 4
+                    let x = 3;          // 5
+                    console.log(x);     // 6 
+                }
+                console.log(x);         // 7 
+            }
+            console.log(x);             // 8
+    }`
+
+    let functionObj = parse(code);
+    let cfg = CFGGenerator.generateCfg2(functionObj);
+    let ddg = DDGGenerator.generateDDG(cfg);
+
+    expectHasEdge(ddg, 1, 2); // def-use(outer x)
+    expectHasEdge(ddg, 1, 8); // def-use(outer x)
+    expectHasEdge(ddg, 3, 4); // def-use(middle x)
+    expectHasEdge(ddg, 3, 7); // def-use(middle x)
+    expectHasEdge(ddg, 5, 6); // def-use(inner x)
+
+});
+
+
+it("DDG25! - Shadowing - Loop", () => {
+    let code = `
+    function foo() {
+        let sum = 0;                        // 1
+        for (let i = 0; i < 5; i++) {       // 2,3,10
+            if (i > 2) {                    // 4
+                let sum = 0;                // 5
+                if (i === 4) {              // 6
+                    continue;               // 7
+                }
+                sum = i;                   // 8
+            }
+            sum = 1;                       // 9
+        }
+        return sum;                         // 11
+    }`
+
+    let functionObj = parse(code);
+    let cfg = CFGGenerator.generateCfg2(functionObj);
+    let ddg = DDGGenerator.generateDDG(cfg);
+
+    /*
+        wrong edges
+        5->9 (def-def)
+        8->9 (def-def)
+    */
+
+    printDDG(cfg,ddg);
+
 });
 
 

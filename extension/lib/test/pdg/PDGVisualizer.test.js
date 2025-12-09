@@ -427,6 +427,7 @@ it("PDG13", () => {
     let pdg = PDGGenerator.generatePDG(cdg,ddg);
     let entryNode = pdg._nodes.find(n => n._id === CDGNodeNames.ENTRY);
 
+    
     expectHasControlEdge(pdg, entryNode._id, 1);
     expectHasControlEdge(pdg, entryNode._id, 2);
     expectHasControlEdge(pdg, entryNode._id, 10);
@@ -656,7 +657,7 @@ it("PDG18", () => {
     let cdg = CDGGenerator.generateCDG(cfg);
     let ddg = DDGGenerator.generateDDG(cfg);
     let pdg = PDGGenerator.generatePDG(cdg,ddg);
-    let entryNode = pdg._nodes.find(n => n._id === CDGNodeNames.ENTRY);
+    let entryNode = pdg._nodes.find(n => n._id === CDGNodeNames.ENTRY); 
     
     expectHasControlEdge(pdg, entryNode._id, 1);
     expectHasControlEdge(pdg, entryNode._id, 2);
@@ -680,6 +681,7 @@ it("PDG18", () => {
     expectHasDataEdge(pdg, 6, 5);
     expectHasDataEdge(pdg, 6, 6);
     expectHasDataEdge(pdg, 6, 7);
+    
 
     showPDG(pdg, "PDGTest18");
 });
