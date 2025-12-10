@@ -32,7 +32,7 @@ class UpdateExpression {
     getUsedVariableNames() {
         let varArray = [];
         //We use only the right part of the assignment as the left is not a variable use but an assignment.
-        if (this._argument?._name) {
+        if (this._argument._name) {
             varArray.push(this._argument._name);
         }
         // else if(!(this._prefix instanceof Identifier) && !(this._prefix instanceof Literal)){

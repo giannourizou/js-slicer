@@ -32,15 +32,15 @@ class BinaryExpression {
     getUsedVariableNames() {
         let varArray = [];
 
-        if (this._left?.getUsedVariableNames){
+        if (this._left.getUsedVariableNames){
             varArray = varArray.concat(this._left.getUsedVariableNames())
-        }else if (this._left?._name){
+        }else if (this._left._name){
             varArray.push(this._left._name);
         }
 
-        if (this._right?.getUsedVariableNames){
+        if (this._right.getUsedVariableNames){
             varArray = varArray.concat(this._right.getUsedVariableNames())
-        }else if (this._right?._name){
+        }else if (this._right._name){
             varArray.push(this._right._name);
         }
 

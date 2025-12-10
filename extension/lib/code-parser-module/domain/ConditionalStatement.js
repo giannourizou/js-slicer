@@ -77,21 +77,21 @@ class ConditionalStatement {
     getUsedVariableNames() {
         let varArray = [];
 
-        if (this._condition?.getUsedVariableNames) {
+        if (this._condition.getUsedVariableNames) {
             varArray = varArray.concat(this._condition.getUsedVariableNames());
-        } else if (this._condition?._name) {
+        } else if (this._condition._name) {
             varArray.push(this._condition._name);
         }
         
-        if (this._then?.getUsedVariableNames) {
+        if (this._then.getUsedVariableNames) {
             varArray = varArray.concat(this._then.getUsedVariableNames());
-        } else if (this._then?._name) {
+        } else if (this._then._name) {
             varArray.push(this._then._name);
         }
         
-        if (this._alternates?.getUsedVariableNames) {
+        if (this._alternates.getUsedVariableNames) {
             varArray = varArray.concat(this._alternates.getUsedVariableNames());
-        } else if (this._alternates?._name) {
+        } else if (this._alternates._name) {
             varArray.push(this._alternates._name);
         }
 

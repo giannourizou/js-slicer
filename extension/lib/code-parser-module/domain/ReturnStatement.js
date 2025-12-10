@@ -14,12 +14,12 @@ class ReturnStatement {
     getUsedVariableNames() {
         varArray = []
 
-        if (this._value?.getUsedVariableNames){
+        if (this._value.getUsedVariableNames){
             varArray = varArray.concat(this._value.getUsedVariableNames())
-        } else if (this._value?._name){
+        } else if (this._value._name){
             varArray.push(this._value._name)
         }
-
+    
         return varArray;
     }
 

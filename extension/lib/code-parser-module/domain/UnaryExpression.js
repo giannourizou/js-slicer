@@ -22,8 +22,8 @@ class UnaryExpression {
 
     getUsedVariableNames() {
         let varArray = [];
-        
-        if (this._argument?.getUsedVariableNames) {
+
+        if (this._argument.getUsedVariableNames) {
             varArray = varArray.concat(this.argument.getUsedVariableNames());
         } else if (this._argument._name) {
             varArray.push(this._argument._name)
