@@ -750,6 +750,41 @@ it("PDG20", () => {
     showPDG(pdg, "PDGTest20");
 });
 
+// Object Properties
+it("PDG21", () =>{
+    let code = `
+    function foo() {
+        let x = 'hello';         // 1
+        let y = 'world';         // 2
+        let obj = {a:x, b:y};    // 3
+        let sum = obj.a + obj.b; // 4
+        obj.a = "bye";           // 5
+        console.log(obj.a);      // 6
+    }`
+
+    let functionObj = parse(code);
+    let cfg = CFGGenerator.generateCfg2(functionObj);
+    let cdg = CDGGenerator.generateCDG(cfg);
+    let ddg = DDGGenerator.generateDDG(cfg);
+    let pdg = PDGGenerator.generatePDG(cdg,ddg);
+    let entryNode = pdg._nodes.find(n => n._id === CDGNodeNames.ENTRY);
+
+    expectHasControlEdge(pdg, entryNode._id, 1);
+    expectHasControlEdge(pdg, entryNode._id, 2);
+    expectHasControlEdge(pdg, entryNode._id, 3);
+    expectHasControlEdge(pdg, entryNode._id, 4);
+    expectHasControlEdge(pdg, entryNode._id, 5);
+    expectHasControlEdge(pdg, entryNode._id, 6);
+
+    expectHasDataEdge(pdg, 1, 3); 
+    expectHasDataEdge(pdg, 2, 3); 
+    expectHasDataEdge(pdg, 3, 4);
+    expectHasDataEdge(pdg, 5, 6); 
+
+    showPDG(pdg, "PDGTest21");
+});
+
+
 /*
 // Try-Catch-Finally Statement
 // Control edges completely wrong

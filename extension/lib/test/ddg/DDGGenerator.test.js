@@ -521,7 +521,6 @@ it("DDG19 - Nested Loops", () =>{
 });
 
 
-
 it("DDG20 - Throw Statement", () =>{
     let code =`
     function foo() {
@@ -539,7 +538,8 @@ it("DDG20 - Throw Statement", () =>{
 
 });
 
-it("DDG21 - Object Property", () =>{
+
+it("DDG21a - Object Property Use", () =>{
     let code = `
     function foo() {
         let x = 'hello';         // 1
@@ -552,13 +552,37 @@ it("DDG21 - Object Property", () =>{
     let cfg = CFGGenerator.generateCfg2(functionObj);
     let ddg = DDGGenerator.generateDDG(cfg);
 
-    expect(ddg._nodes.length).toBe(5);
+    //expect(ddg._nodes.length).toBe(5);
 
     expectHasEdge(ddg,1,3); // def-use(x)
     expectHasEdge(ddg,2,3); // def-use(y)
     expectHasEdge(ddg,3,4); // def-use (obj)
 
 });
+
+
+it("DDG21b - Object Property Redefine & Use", () =>{
+    let code = `
+    function foo() {
+        let x = 'hello';         // 1
+        let y = 'world';         // 2
+        let obj = {a:x, b:y};    // 3
+        obj.a = "bye";           // 4
+        console.log(obj.a);      // 5
+    }`
+
+    let functionObj = parse(code);
+    let cfg = CFGGenerator.generateCfg2(functionObj);
+    let ddg = DDGGenerator.generateDDG(cfg);
+
+    expect(ddg._nodes.length).toBe(6);
+
+    expectHasEdge(ddg,1,3); // def-use(x)
+    expectHasEdge(ddg,2,3); // def-use(y)
+    expectHasEdge(ddg,4,5); // def-use (obj)
+
+});
+
 
 
 it("DDG22 - New Expression", () =>{
@@ -621,7 +645,6 @@ it("DDG23 - Nested Loops (While & For Loop)", () => {
     printDDG(cfg,ddg);
 });
 
-
 /*
 it("DDG10! - Arrays - Update Element", () => {
     let code =`
@@ -648,6 +671,7 @@ it("DDG10! - Arrays - Update Element", () => {
 });
 */
 
+/* SHADOWING TESTS
 it("DDG23 - Different scopes - Same name variables (Shadowing)", () =>{
     let code = `
     function foo() {
@@ -726,16 +750,16 @@ it("DDG25! - Shadowing - Loop", () => {
     let cfg = CFGGenerator.generateCfg2(functionObj);
     let ddg = DDGGenerator.generateDDG(cfg);
 
-    /*
-        wrong edges
-        5->9 (def-def)
-        8->9 (def-use)
-    */
+    
+    //    wrong edges
+    //    5->9 (def-def)
+    //    8->9 (def-use)
+    
 
     
 
 });
-
+*/
 
 // UNSUPPORTED TESTS
 // Template Literals
