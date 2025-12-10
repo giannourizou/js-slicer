@@ -292,7 +292,17 @@ class CFG {
                 let def_use = false;
                 if (sourceNodeDeclaredVar && sourceNodeDeclaredVar.includes(variable) && destNodeUsedVars.includes(variable)){
                     if (fromNode._nesting > toNode._nesting) {   
-                        def_use = !(fromNode._statement instanceof VariableDeclaration); // inner def shouldn't reach outer use
+                        if (fromNode._statement instanceof VariableDeclaration) { 
+                            // Inner def shouldn't reach outer use
+                            def_use = false;
+                        }else {
+                            // If there is a def in the same scope as fromNode between fromNode and toNode
+                            // Don't consider def-use dependency
+                            def_use = !(this._nodes.some((n) => 
+                            n._scope === fromNode._scope &&
+                            n._statement instanceof VariableDeclaration &&
+                            n._statement.getDefinedVariable().flatMap(this.extractVarNames).includes(variable)));
+                        }
                     }
                     else if (fromNode._nesting === toNode._nesting && fromNode._scope !== toNode._scope) {
                         def_use = this.hasAccessToNode(toNode, fromNode._scope, toNode._scope); 

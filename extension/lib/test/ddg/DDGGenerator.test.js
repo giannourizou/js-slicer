@@ -645,6 +645,7 @@ it("DDG23 - Nested Loops (While & For Loop)", () => {
     printDDG(cfg,ddg);
 });
 
+
 /*
 it("DDG10! - Arrays - Update Element", () => {
     let code =`
@@ -671,7 +672,7 @@ it("DDG10! - Arrays - Update Element", () => {
 });
 */
 
-/* SHADOWING TESTS
+
 it("DDG23 - Different scopes - Same name variables (Shadowing)", () =>{
     let code = `
     function foo() {
@@ -729,37 +730,44 @@ it("DDG24 - Shadowing - Double nesting", () => {
 });
 
 
-it("DDG25! - Shadowing - Loop", () => {
+it("DDG25 - Shadowing - Loop", () => {
     let code = `
     function foo() {
-        let sum = 0;                        // 1
-        for (let i = 0; i < 5; i++) {       // 2,3,10
-            if (i > 2) {                    // 4
-                let sum = 0;                // 5
-                if (i === 4) {              // 6
-                    continue;               // 7
+        let sum = 0;                    // 1
+        for (let i = 0; i < 5; i++) {   // 2, 3, 10
+            if (i > 2) {                // 4
+                let sum = 0;            // 5
+                if (i === 4) {          // 6
+                    continue;           // 7
                 }
-                sum += i;                   // 8
+                sum += i;                // 8
             }
-            sum += 1;                       // 9
+            sum += 1;                    // 9
         }
-        return sum;                         // 11
+        return sum;                     // 11
     }`
 
     let functionObj = parse(code);
     let cfg = CFGGenerator.generateCfg2(functionObj);
     let ddg = DDGGenerator.generateDDG(cfg);
 
-    
-    //    wrong edges
-    //    5->9 (def-def)
-    //    8->9 (def-use)
-    
-
-    
+    expectHasEdge(ddg, 1, 9); // def-use(outer sum)
+    expectHasEdge(ddg, 1, 11); // def-use(outer sum)
+    expectHasEdge(ddg, 2, 3); // def-use(i)
+    expectHasEdge(ddg, 2, 4); // def-use(i)
+    expectHasEdge(ddg, 2, 6); // def-use(i)
+    expectHasEdge(ddg, 2, 8); // def-use(i)
+    expectHasEdge(ddg, 2, 10); // def-use(i)
+    expectHasEdge(ddg, 5, 8); // def-use(inner sum)
+    expectHasEdge(ddg, 9, 9); // def-use & def-def (outer sum)
+    expectHasEdge(ddg, 9, 11); // def-use (outer sum)
+    expectHasEdge(ddg, 10, 3); // def-use(i)
+    expectHasEdge(ddg, 10, 4); // def-use(i)
+    expectHasEdge(ddg, 10, 6); // def-use(i)
+    expectHasEdge(ddg, 10, 8); // def-use(i)
+    expectHasEdge(ddg, 10, 10); // def-use(i)
 
 });
-*/
 
 // UNSUPPORTED TESTS
 // Template Literals

@@ -785,6 +785,148 @@ it("PDG21", () =>{
 });
 
 
+// Shadowing - Sibling Nests
+it("PDG22", () =>{
+    let code = `
+    function foo() {
+        let x = 5;      // 1
+        if (x===3){     // 2
+            let x = 10; // 3
+            let y = x;  // 4
+        }
+        if (x === 4){   // 5
+            let x = 5;  // 6
+            let y = 6;  // 7
+        }
+        let z = x;      // 8
+    }`
+
+    let functionObj = parse(code);
+    let cfg = CFGGenerator.generateCfg2(functionObj);
+    let cdg = CDGGenerator.generateCDG(cfg);
+    let ddg = DDGGenerator.generateDDG(cfg);
+    let pdg = PDGGenerator.generatePDG(cdg,ddg);
+    let entryNode = pdg._nodes.find(n => n._id === CDGNodeNames.ENTRY);
+
+    expectHasControlEdge(pdg, entryNode._id, 1);
+    expectHasControlEdge(pdg, entryNode._id, 2);
+    expectHasControlEdge(pdg, entryNode._id, 5);
+    expectHasControlEdge(pdg, entryNode._id, 8);
+    expectHasControlEdge(pdg, entryNode._id, 9);
+    expectHasControlEdge(pdg, 2, 3);
+    expectHasControlEdge(pdg, 2, 4);
+    expectHasControlEdge(pdg, 5, 6);
+    expectHasControlEdge(pdg, 5, 7);
+
+    expectHasDataEdge(pdg, 1, 2); 
+    expectHasDataEdge(pdg, 1, 5);
+    expectHasDataEdge(pdg, 1, 8);  
+    expectHasDataEdge(pdg, 3, 4);
+    
+    showPDG(pdg, "PDGTest22");
+});
+
+
+// Shadowing - Triple Nesting
+it("PDG23", () =>{
+    let code = `
+    function foo(){
+        let x = 1;      // 1
+        if (x===1){     // 2
+            let x = 2;  // 3
+            if (x === 2){ // 4
+                let x = 3; // 5
+                if (x === 3){ // 6
+                    console.log(x); // 7
+                }
+            }
+            console.log(x);  // 8
+        }
+        console.log(x);      // 9
+    }`
+
+    let functionObj = parse(code);
+    let cfg = CFGGenerator.generateCfg2(functionObj);
+    let cdg = CDGGenerator.generateCDG(cfg);
+    let ddg = DDGGenerator.generateDDG(cfg);
+    let pdg = PDGGenerator.generatePDG(cdg,ddg);
+    let entryNode = pdg._nodes.find(n => n._id === CDGNodeNames.ENTRY);
+    
+    expectHasControlEdge(pdg, entryNode._id, 1);
+    expectHasControlEdge(pdg, entryNode._id, 2);
+    expectHasControlEdge(pdg, entryNode._id, 9);
+    expectHasControlEdge(pdg, entryNode._id, 10);
+    expectHasControlEdge(pdg, 2, 3);
+    expectHasControlEdge(pdg, 2, 4);
+    expectHasControlEdge(pdg, 2, 8);
+    expectHasControlEdge(pdg, 4, 5);
+    expectHasControlEdge(pdg, 4, 6);  
+    expectHasControlEdge(pdg, 6, 7);
+
+    expectHasDataEdge(pdg, 1, 2); 
+    expectHasDataEdge(pdg, 1, 9);
+    expectHasDataEdge(pdg, 3, 4);  
+    expectHasDataEdge(pdg, 3, 8);
+    expectHasDataEdge(pdg, 5, 6);
+    expectHasDataEdge(pdg, 5, 7);
+    
+    showPDG(pdg, "PDGTest23");
+});
+
+
+
+
+/*
+// Shadowing - Nested Loops
+it("PDG24", () =>{
+    let code = `
+    function foo() {
+        let sum = 0;                        // 1
+        for (let i = 0; i < 3; i++) {       // 2, 3, 11
+            sum += i;                       // 4 
+            if (i > 0) {                    // 5
+                let sum = 10;               // 6 
+                for (let j = 0; j < 2; j++) { // 7, 8, 10
+                    sum += j;               // 9 
+                }
+            }
+        }
+        return sum;                         // 12
+    }`
+
+    let functionObj = parse(code);
+    let cfg = CFGGenerator.generateCfg2(functionObj);
+    let cdg = CDGGenerator.generateCDG(cfg);
+    let ddg = DDGGenerator.generateDDG(cfg);
+    let pdg = PDGGenerator.generatePDG(cdg,ddg);
+    let entryNode = pdg._nodes.find(n => n._id === CDGNodeNames.ENTRY);
+
+    
+    expectHasControlEdge(pdg, entryNode._id, 1);
+    expectHasControlEdge(pdg, entryNode._id, 2);
+    expectHasControlEdge(pdg, entryNode._id, 3);
+    expectHasControlEdge(pdg, entryNode._id, 12);
+    expectHasControlEdge(pdg, entryNode._id, 13);
+    expectHasControlEdge(pdg, 3, 4);
+    expectHasControlEdge(pdg, 3, 5);
+    expectHasControlEdge(pdg, 3, 11);
+    expectHasControlEdge(pdg, 8, 9);
+    expectHasControlEdge(pdg, 8, 10);
+
+    // Wrong Control Edges !!
+    // 3->6
+    // 3->7
+    // 3->8
+
+    // Wrong Data Edges !!
+    // 9->12
+    // missing 4->4
+    // etc
+    
+    showPDG(pdg, "PDGTest24");
+});
+*/
+
 /*
 // Try-Catch-Finally Statement
 // Control edges completely wrong
