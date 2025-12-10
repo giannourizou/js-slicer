@@ -135,7 +135,7 @@ it("PDG4", () => {
     expectHasControlEdge(pdg, entryNode._id, 2);
     expectHasControlEdge(pdg, entryNode._id, 3);
 
-    expectHasDataEdge(pdg, 1, 2);
+    // No def-use edges
 
     showPDG(pdg, "PDGTest4");
 });
@@ -161,7 +161,7 @@ it("PDG5", () => {
     expectHasControlEdge(pdg, entryNode._id, 2);
     expectHasControlEdge(pdg, entryNode._id, 3);
 
-    expectHasDataEdge(pdg, 1, 2);
+    // No def-use edges
 
     showPDG(pdg, "PDGTest5");
 });
@@ -223,9 +223,7 @@ it("PDG7", () => {
     expectHasControlEdge(pdg, entryNode._id, 4);
     expectHasControlEdge(pdg, entryNode._id, 5);
 
-    expectHasDataEdge(pdg, 1, 2);
-    expectHasDataEdge(pdg, 2, 3);
-    expectHasDataEdge(pdg, 3, 4);
+    // No def-use edges
 
     showPDG(pdg, "PDGTest7");
 });
@@ -442,18 +440,10 @@ it("PDG13", () => {
     expectHasControlEdge(pdg, 2, 9);
 
     expectHasDataEdge(pdg, 1, 2);
-    expectHasDataEdge(pdg, 1, 3);
-    expectHasDataEdge(pdg, 1, 5);
-    expectHasDataEdge(pdg, 1, 7);
-    expectHasDataEdge(pdg, 1, 9);
-    expectHasDataEdge(pdg, 2, 3);
-    expectHasDataEdge(pdg, 2, 5);
-    expectHasDataEdge(pdg, 2, 7);
-    expectHasDataEdge(pdg, 2, 9);
     expectHasDataEdge(pdg, 3, 10);
     expectHasDataEdge(pdg, 5, 10);
     expectHasDataEdge(pdg, 7, 10);
-    expectHasDataEdge(pdg, 9, 10);
+    expectHasDataEdge(pdg, 9, 10);    
 
     showPDG(pdg, "PDGTest13");
 });
@@ -494,13 +484,10 @@ it("PDG14", () => {
     expectHasControlEdge(pdg, 3, 5);
     expectHasControlEdge(pdg, 6, 7);
 
-    expectHasDataEdge(pdg, 1, 2);
     expectHasDataEdge(pdg, 2, 5);
     expectHasDataEdge(pdg, 2, 8);
-    expectHasDataEdge(pdg, 5, 8);
     expectHasDataEdge(pdg, 4, 8);
-    expectHasDataEdge(pdg, 2, 5);
-    expectHasDataEdge(pdg, 6, 7);
+    expectHasDataEdge(pdg, 5, 8);
     expectHasDataEdge(pdg, 7, 8);
 
     showPDG(pdg, "PDGTest14");
@@ -540,19 +527,15 @@ it("PDG15", () => {
     expectHasDataEdge(pdg, 1, 2);
     expectHasDataEdge(pdg, 1, 5);
     expectHasDataEdge(pdg, 1, 7);
-    expectHasDataEdge(pdg, 2, 7);
     expectHasDataEdge(pdg, 3, 4);
     expectHasDataEdge(pdg, 3, 5);
     expectHasDataEdge(pdg, 3, 6);
-    expectHasDataEdge(pdg, 4, 6);
-    expectHasDataEdge(pdg, 5, 6);
-    expectHasDataEdge(pdg, 5, 7);
     expectHasDataEdge(pdg, 6, 4);
     expectHasDataEdge(pdg, 6, 5);
     expectHasDataEdge(pdg, 6, 6);
+    expectHasDataEdge(pdg, 7, 2);
     expectHasDataEdge(pdg, 7, 5);
     expectHasDataEdge(pdg, 7, 7);
-    expectHasDataEdge(pdg, 7, 2);
 
     showPDG(pdg, "PDGTest15");
 });
@@ -585,15 +568,13 @@ it("PDG16", () => {
     expectHasControlEdge(pdg, entryNode._id, 7);
     expectHasControlEdge(pdg, 3, 4);
     expectHasControlEdge(pdg, 3, 5);
-
+    
     expectHasDataEdge(pdg, 1, 4);
     expectHasDataEdge(pdg, 1, 6);
-    expectHasDataEdge(pdg, 2, 4);
     expectHasDataEdge(pdg, 2, 3);
+    expectHasDataEdge(pdg, 2, 4);
     expectHasDataEdge(pdg, 2, 5);
-    expectHasDataEdge(pdg, 3, 5);
     expectHasDataEdge(pdg, 4, 4);
-    expectHasDataEdge(pdg, 4, 5);
     expectHasDataEdge(pdg, 4, 6);
     expectHasDataEdge(pdg, 5, 4);
     expectHasDataEdge(pdg, 5, 3);
@@ -673,16 +654,12 @@ it("PDG18", () => {
     expectHasDataEdge(pdg, 1, 5);
     expectHasDataEdge(pdg, 1, 6);
     expectHasDataEdge(pdg, 1, 7);
-    expectHasDataEdge(pdg, 2, 6);
-    expectHasDataEdge(pdg, 3, 6);
-    expectHasDataEdge(pdg, 5, 6);
     expectHasDataEdge(pdg, 6, 2);
     expectHasDataEdge(pdg, 6, 3);
     expectHasDataEdge(pdg, 6, 5);
     expectHasDataEdge(pdg, 6, 6);
     expectHasDataEdge(pdg, 6, 7);
     
-
     showPDG(pdg, "PDGTest18");
 });
 
@@ -727,13 +704,11 @@ it("PDG19", () => {
     expectHasControlEdge(pdg, 3, 6);
     expectHasControlEdge(pdg, 3, 7);
     expectHasControlEdge(pdg, 3, 8);
-    expectHasControlEdge(pdg, 3, 9);
+    expectHasControlEdge(pdg, 3, 9);   
     
     expectHasDataEdge(pdg, 1, 3);
-    expectHasDataEdge(pdg, 2, 4);
     expectHasDataEdge(pdg, 2, 6);
     expectHasDataEdge(pdg, 2, 7);
-    expectHasDataEdge(pdg, 2, 9);
     expectHasDataEdge(pdg, 6, 7); // fallthrough
     expectHasDataEdge(pdg, 4, 10);
     expectHasDataEdge(pdg, 7, 10);

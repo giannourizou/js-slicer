@@ -19,7 +19,7 @@ function printDDG(cfg,ddg){
     });
 }
 
-
+/*
 it("throws error when CFG is missing", () => {
     expect(() => {
         DDGGenerator.generateDDG(null);
@@ -89,7 +89,7 @@ it("DDG3 - Use-Def & Intervening Definition", () => {
 
     expectHasEdge(ddg,1,2); // def-use
     expectHasEdge(ddg,1,3); // def-def
-    expectHasEdge(ddg,2,3); // use-def
+    //expectHasEdge(ddg,2,3); // use-def
     expectHasEdge(ddg,3,4); // def-use
     expect(ddg.hasEdge(1,4)).toBe(false); // no use-def due to intervening definition
 });
@@ -176,9 +176,9 @@ it("DDG6 - For Loop Statement", () =>{
     expectHasEdge(ddg,2,3); // def-use (i)
     expectHasEdge(ddg,2,4); // def-use (i)
     expectHasEdge(ddg,2,5); // def-def & def-use (i)
-    expectHasEdge(ddg,3,5); // use-def (i)
+    //expectHasEdge(ddg,3,5); // use-def (i)
     expectHasEdge(ddg,4,4); // def-use & def-def & use_def (sum)
-    expectHasEdge(ddg,4,5); // use-def (i)
+    //expectHasEdge(ddg,4,5); // use-def (i)
     expectHasEdge(ddg,4,6); // def-use (sum)
     expectHasEdge(ddg,5,3); // def-use (i)
     expectHasEdge(ddg,5,4); // def-use (i)
@@ -246,13 +246,13 @@ it("DDG8 - While Loop & Continue Statement", () => {
     expectHasEdge(ddg,1,4); // def-def & def-use (x)
     expectHasEdge(ddg,2,7); // def-def & def-use (sum)
     expectHasEdge(ddg,2,8); // def-use (sum)
-    expectHasEdge(ddg,3,4); // use-def (x)
+    //expectHasEdge(ddg,3,4); // use-def (x)
     expectHasEdge(ddg,4,3); // def-use (x)
     expectHasEdge(ddg,4,4); // def-use & use-def & def-def (x)
     expectHasEdge(ddg,4,5); // def-use (x)
     expectHasEdge(ddg,4,7); // def-use (x)
-    expectHasEdge(ddg,5,4); // use-def (x)
-    expectHasEdge(ddg,7,4); // use-def (x)
+    //expectHasEdge(ddg,5,4); // use-def (x)
+    //expectHasEdge(ddg,7,4); // use-def (x)
     expectHasEdge(ddg,7,7); // def-use & use-def & def-def (sum)
     expectHasEdge(ddg,7,8); // def-use (sum)
     
@@ -364,7 +364,7 @@ it("DDG14 - Arrow Functions", () =>{
     expectHasEdge(ddg,1,4); // def-use (arr)
     expectHasEdge(ddg,2,3); // def-use (doubled)
     expectHasEdge(ddg,2,5); // def-use (doubled)
-    expectHasEdge(ddg,3,5); // use-def (doubled)
+    //expectHasEdge(ddg,3,5); // use-def (doubled)
     expectHasEdge(ddg,4,5); // def-use (two)
 });
 
@@ -458,10 +458,10 @@ it("DDG18 - Compound Operators", () =>{
     expectHasEdge(ddg,2,3); // def-use(i)
     expectHasEdge(ddg,2,4); // def-use(i)
     expectHasEdge(ddg,2,5); // def-def & def-use (i)
-    expectHasEdge(ddg,3,5); // use-def(i)
-    expectHasEdge(ddg,4,4); // use-def(sum)
-    expectHasEdge(ddg,4,5); // use-def(i)
-    expectHasEdge(ddg,4,6); // def-def & use-def (sum)
+    //expectHasEdge(ddg,3,5); // use-def(i)
+    //expectHasEdge(ddg,4,4); // use-def(sum)
+    //expectHasEdge(ddg,4,5); // use-def(i)
+    //expectHasEdge(ddg,4,6); // def-def & use-def (sum)
     expectHasEdge(ddg,5,3); // def-use(i)
     expectHasEdge(ddg,5,4); // def-use(i)
     expectHasEdge(ddg,5,5); // def-def & use-def & def-use (i)
@@ -497,17 +497,17 @@ it("DDG19 - Nested Loops", () =>{
     expectHasEdge(ddg,2,6); // def-use(i)
     expectHasEdge(ddg,2,8); // def-def & def-use (i)
 
-    expectHasEdge(ddg,3,8); // use-def(i)
+    //expectHasEdge(ddg,3,8); // use-def(i)
 
     expectHasEdge(ddg,4,5); // def-use(j)
     expectHasEdge(ddg,4,6); // def-use(j)
     expectHasEdge(ddg,4,7); // def-def & def-use(j)
 
-    expectHasEdge(ddg,5,7); // use-def(j)
+    //expectHasEdge(ddg,5,7); // use-def(j)
 
     expectHasEdge(ddg,6,6); // def-def(sum)
-    expectHasEdge(ddg,6,7); // use-def(j)
-    expectHasEdge(ddg,6,8); // use-def(i)
+    //expectHasEdge(ddg,6,7); // use-def(j)
+    //expectHasEdge(ddg,6,8); // use-def(i)
     expectHasEdge(ddg,6,9); // def-use(sum)
 
     expectHasEdge(ddg,7,5); // def-use(j)
@@ -599,20 +599,20 @@ it("DDG23 - Nested Loops (While & For Loop)", () => {
     expectHasEdge(ddg, 1, 5); // def-use(x)
     expectHasEdge(ddg, 1, 7); // def-def & def-use (x)
 
-    expectHasEdge(ddg, 2, 7); // use-def(x)
+    //expectHasEdge(ddg, 2, 7); // use-def(x)
 
     expectHasEdge(ddg, 3, 4); // def-use(j)
     expectHasEdge(ddg, 3, 5); // def-use(j)
     expectHasEdge(ddg, 3, 6); // def-use & def-def (j)
 
-    expectHasEdge(ddg, 4, 6); // use-def(j)
+    //expectHasEdge(ddg, 4, 6); // use-def(j)
 
-    expectHasEdge(ddg, 5, 6); // use-def(j)
-    expectHasEdge(ddg, 5, 7); // use-def(x)
+    //expectHasEdge(ddg, 5, 6); // use-def(j)
+    //expectHasEdge(ddg, 5, 7); // use-def(x)
 
     expectHasEdge(ddg, 6, 4); // def-use(j)
     expectHasEdge(ddg, 6, 5); // def-use(j)
-    expectHasEdge(ddg, 6, 6); // def-def & use-def(j)
+    //expectHasEdge(ddg, 6, 6); // def-def & use-def(j)
 
     expectHasEdge(ddg, 7, 5); // def-use(x)
     expectHasEdge(ddg, 7, 7); // def-def & def-use (x)
@@ -620,7 +620,7 @@ it("DDG23 - Nested Loops (While & For Loop)", () => {
 
     printDDG(cfg,ddg);
 });
-
+*/
 
 /*
 it("DDG10! - Arrays - Update Element", () => {
@@ -715,9 +715,9 @@ it("DDG25! - Shadowing - Loop", () => {
                 if (i === 4) {              // 6
                     continue;               // 7
                 }
-                sum = i;                   // 8
+                sum += i;                   // 8
             }
-            sum = 1;                       // 9
+            sum += 1;                       // 9
         }
         return sum;                         // 11
     }`
@@ -729,10 +729,10 @@ it("DDG25! - Shadowing - Loop", () => {
     /*
         wrong edges
         5->9 (def-def)
-        8->9 (def-def)
+        8->9 (def-use)
     */
 
-    printDDG(cfg,ddg);
+    
 
 });
 

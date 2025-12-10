@@ -301,16 +301,17 @@ class CFG {
                     }
                 }
                 
+                /* Optional Data Dependencies - Needs scope analysis to be accurate
                 let use_def = sourceNodeUsedVars.includes(variable) && destNodeDeclaredVar && destNodeDeclaredVar.includes(variable);
                 let def_def = sourceNodeDeclaredVar && sourceNodeDeclaredVar.includes(variable) && destNodeDeclaredVar && destNodeDeclaredVar.includes(variable);
+                */
 
-                //console.log(`Nodes ${fromNode._id} & ${toNode._id} def_use: ${def_use}, use_def: ${use_def}, def_def: ${def_def}`);
+                //console.log(`Nodes ${fromNode._id} & ${toNode._id} def_use: ${def_use}`);
 
-                return !hasInterveningDefinition && (def_use || use_def || def_def);
+                return !hasInterveningDefinition && def_use;
             });
             if (nodesAreDataDependent) variableDependencyList.push(variable);
         }
-
         return variableDependencyList.length ? variableDependencyList : [];
     }
 
@@ -340,7 +341,6 @@ class CFG {
         }
         return false;
     }
-
 }
 
 module.exports = CFG;
