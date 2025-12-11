@@ -28,9 +28,9 @@ class MemberExpression {
     getUsedVariableNames() {
         let varArray = [];
 
-        if (this._object?.getUsedVariableNames) {
+        if (this._object.getUsedVariableNames) {
             varArray = varArray.concat(this._object.getUsedVariableNames());
-        } else if (this._object?._name) {
+        } else if (this._object._name) {
             varArray.push(this._object._name);
         }
 

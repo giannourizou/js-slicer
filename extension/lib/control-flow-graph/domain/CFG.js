@@ -238,15 +238,16 @@ class CFG {
         let destNodeUsedVars = toNode._statement.getUsedVariableNames();
 
         let sourceNodeDeclaredVar = typeof fromNode._statement.getDefinedVariable === "function" ?
-            fromNode._statement.getDefinedVariable() : undefined;
+            fromNode._statement.getDefinedVariable() : [];
         let destNodeDeclaredVar = typeof toNode._statement.getDefinedVariable === "function" ?
-            toNode._statement.getDefinedVariable() : undefined;
+            toNode._statement.getDefinedVariable() : [];
 
-        sourceNodeDeclaredVar = sourceNodeDeclaredVar ? sourceNodeDeclaredVar.flatMap(this.extractVarNames) : [];
-        destNodeDeclaredVar = destNodeDeclaredVar ? destNodeDeclaredVar.flatMap(this.extractVarNames) : [];
-        sourceNodeUsedVars = sourceNodeUsedVars ? sourceNodeUsedVars.flatMap(this.extractVarNames) : [];
-        destNodeUsedVars = destNodeUsedVars ? destNodeUsedVars.flatMap(this.extractVarNames) : [];
+
+        sourceNodeUsedVars = sourceNodeUsedVars ? sourceNodeUsedVars.flatMap(this.extractUsedVarNames) : [];
+        destNodeUsedVars = destNodeUsedVars ? destNodeUsedVars.flatMap(this.extractUsedVarNames) : [];
         
+        //console.log(`${fromNode._id} declares: ${sourceNodeDeclaredVar}, uses: ${sourceNodeUsedVars}`);
+
         let allVars = _.uniq(sourceNodeUsedVars.concat(destNodeUsedVars));
         if (sourceNodeDeclaredVar) allVars = allVars.concat(sourceNodeDeclaredVar);
         if (destNodeDeclaredVar) allVars = allVars.concat(destNodeDeclaredVar);
@@ -281,7 +282,7 @@ class CFG {
                 let hasInterveningDefinition = remainingNodes.some((rNode) => {
                     let rNodeDeclaredVar = typeof rNode._statement.getDefinedVariable === "function" ?
                         rNode._statement.getDefinedVariable() : undefined;
-                    rNodeDeclaredVar = rNodeDeclaredVar ? rNodeDeclaredVar.flatMap(this.extractVarNames) : [];
+                    rNodeDeclaredVar = rNodeDeclaredVar ? rNodeDeclaredVar.flatMap(this.extractDeclaredVarNames) : [];
                     //console.log(`Node ${rNode._id} declares ${rNodeDeclaredVar}
  
                     return rNodeDeclaredVar && rNodeDeclaredVar.includes(variable);
@@ -301,7 +302,7 @@ class CFG {
                             def_use = !(this._nodes.some((n) => 
                             n._scope === fromNode._scope &&
                             n._statement instanceof VariableDeclaration &&
-                            n._statement.getDefinedVariable().flatMap(this.extractVarNames).includes(variable)));
+                            n._statement.getDefinedVariable().includes(variable)));
                         }
                     }
                     else if (fromNode._nesting === toNode._nesting && fromNode._scope !== toNode._scope) {
@@ -325,11 +326,15 @@ class CFG {
         return variableDependencyList.length ? variableDependencyList : [];
     }
 
-    extractVarNames = (item) => {
+    extractUsedVarNames = (item) => {
         if (typeof item === 'string') return [item];
         names = [];
-        if (item?.getUsedVariableNames) {names = names.concat(item.getUsedVariableNames().flatMap(this.extractVarNames));}
+        if (item?.getUsedVariableNames) {names = names.concat(item.getUsedVariableNames().flatMap(this.extractUsedVarNames));}
         return names;
+    }
+
+    extractDeclaredVarNames = (item) => {
+        if (typeof item === 'string') return [item];
     }
 
     // Check if node X's variables are accessible from node Y

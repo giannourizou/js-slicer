@@ -43,7 +43,15 @@ class VariableDeclaration {
     }
 
     getDefinedVariable() {
-        return this._names;
+        let defVars = [];
+
+        this._names.forEach((name) => {
+            if (name?._name) {
+                defVars.push(name._name);
+            }
+        });
+
+        return defVars;
     }
 
     accept(visitor) {

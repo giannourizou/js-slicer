@@ -279,6 +279,73 @@ it("DDG9 - Arrays - Simple Access", () => {
     expectHasEdge(ddg,3,4); // def-use (y)
 
 })
+    
+
+/* ARRAY HANDLING:
+ * An array is considered as a single variable.
+ * Specific array indices are not tracked separately.
+ * Any array element modification creates dependencies on the entire array.
+ * When iterating through an array, the loop variable is tracked.
+ * 
+*/
+
+it("DDG10a - Arrays - Update Element", () =>{
+    let code =`
+    function foo() {
+        let arr = [1,2,3];  // 1
+        arr[1] = arr[0];    // 2
+        let x = arr[0];     // 3
+    }`
+
+    let functionObj = parse(code);
+    let cfg = CFGGenerator.generateCfg2(functionObj);
+    let ddg = DDGGenerator.generateDDG(cfg);
+
+    expect(ddg._nodes.length).toBe(4);
+
+    expectHasEdge(ddg, 1, 2); // def-def (arr)
+    expectHasEdge(ddg, 2, 3); // def-use (arr)
+    expect(ddg.hasEdge(1,3)).toBe(false); // should not be a def-use (arr) due to intervening definition
+
+});
+
+
+it("DDG10b - Arrays - Update Element", () =>{
+    let code =`
+    function foo() {
+        let arr = [1,2,3];  // 1
+        for (let i = 0; i < arr.length; i++) { // 2,3,6
+            console.log(arr[i]); // 4
+            arr[i] = arr[i+1];    // 5
+        }
+    }`
+
+    let functionObj = parse(code);
+    let cfg = CFGGenerator.generateCfg2(functionObj);
+    let ddg = DDGGenerator.generateDDG(cfg);
+
+    expect(ddg._nodes.length).toBe(7);
+    
+    expectHasEdge(ddg, 1, 3); // def-use (arr)
+    expectHasEdge(ddg, 1, 4); // def-use (arr)
+    expectHasEdge(ddg, 1, 5); // def-use (arr)
+
+    expectHasEdge(ddg, 2, 3); // def-use (i)
+    expectHasEdge(ddg, 2, 4); // def-use (i)
+    expectHasEdge(ddg, 2, 5); // def-use (i)
+    expectHasEdge(ddg, 2, 6); // def-use (i)
+    
+    expectHasEdge(ddg, 5, 3); // def-use (arr)
+    expectHasEdge(ddg, 5, 4); // def-use (arr)
+    expectHasEdge(ddg, 5, 5); // def-use (arr)
+
+    expectHasEdge(ddg, 6, 3); // def-use (i)
+    expectHasEdge(ddg, 6, 4); // def-use (i)
+    expectHasEdge(ddg, 6, 5); // def-use (i)
+    expectHasEdge(ddg, 6, 6); // def-use (i) 
+    
+});
+
 
 it("DDG11 - Arrays - Mutating Methods", () => {
     let code =`
@@ -488,7 +555,6 @@ it("DDG19 - Nested Loops", () =>{
     let ddg = DDGGenerator.generateDDG(cfg);
 
     expect(ddg._nodes.length).toBe(10);
-    printDDG(cfg,ddg);
 
     expectHasEdge(ddg,1,6); // def-def & def-use (sum)
     expectHasEdge(ddg,1,9); // def-use (sum)
@@ -538,6 +604,14 @@ it("DDG20 - Throw Statement", () =>{
 
 });
 
+
+/* OBJECT HANDLING:
+ * An object is considered as a single variable.
+ * Specific object properties are not tracked separately.
+ * Any object property modification creates dependencies on the entire object.
+ * When assigning a value to an object's property, the def-use path is tracked.
+ * 
+*/
 
 it("DDG21a - Object Property Use", () =>{
     let code = `
@@ -642,35 +716,7 @@ it("DDG23 - Nested Loops (While & For Loop)", () => {
     expectHasEdge(ddg, 7, 7); // def-def & def-use (x)
     expectHasEdge(ddg, 7, 2); // def-use(x)
 
-    printDDG(cfg,ddg);
 });
-
-
-/*
-it("DDG10! - Arrays - Update Element", () => {
-    let code =`
-    function foo(){
-        let arr = [1,2,3];  // 1
-        arr[1] = 10;        // 2
-        let x = arr[1];     // 3
-    }`
-
-    let functionObj = parse(code);
-    let cfg = CFGGenerator.generateCfg2(functionObj);
-    let ddg = DDGGenerator.generateDDG(cfg);
-
-    expect(ddg._nodes.length).toBe(4);
-
-    //expectHasEdge(ddg,1,2); // def-def (arr)
-    //expectHasEdge(ddg,1,3); // def-use (arr)
-    //expect(ddg.hasEdge(1,3)).toBe(false); // should not be a def-use (arr) due to intervening definition
-    // arr acts like a variable!!!
-    // Do we accept variable level limitation?
-
-    printDDG(cfg,ddg);
-
-});
-*/
 
 
 it("DDG23 - Different scopes - Same name variables (Shadowing)", () =>{

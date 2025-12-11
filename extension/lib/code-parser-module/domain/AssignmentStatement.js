@@ -1,3 +1,5 @@
+const MemberExpression = require("../../code-parser-module/domain/MemberExpression");
+
 class AssignmentStatement {
     constructor(left, right, operator) {
         this._left = left;
@@ -40,17 +42,33 @@ class AssignmentStatement {
 
         let compoundOperators = ['+=', '-=', '*=', '/=', '%=', '**=', '&=', '|=', '^=', '<<=', '>>=', '>>>=', '&&=', '||=', '??='];
         if(compoundOperators.includes(this._operator)){
-            if (this._left?.getUsedVariableNames) {
+            if (this._left.getUsedVariableNames) {
                 varArray = varArray.concat(this._left.getUsedVariableNames());
-            } else if (this._left?._name) {
+            } else if (this._left._name) {
                 varArray.push(this._left._name);
             }
         }
+
+        
+        if (this._left instanceof MemberExpression) {
+            varArray.push(this._left._object._name);
+            if (this._left._computed && this._left._property._name) {
+                varArray.push(this._left._property._name);
+            }
+        }
+        
+
         return varArray;
     }
 
     getDefinedVariable() {
-        return [this._left];
+        if (this._left instanceof MemberExpression) {
+            return [this._left._object._name];
+        }
+        if (this._left._name){
+            return [this._left._name];
+        }
+        return [];
     }
 
     accept(visitor) {

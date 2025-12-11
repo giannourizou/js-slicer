@@ -874,11 +874,153 @@ it("PDG23", () =>{
 });
 
 
+// Arrays - Mutating & Non mutating functions
+it("PDG24", () =>{
+    let code = `
+    function foo(){
+        let arr = [1,2,3];        // 1
+        if (arr.length === 3){    // 2
+            arr.push(4);          // 3
+            if (arr[3] === 4){    // 4
+                console.log(arr); // 5
+            }
+        }
+        console.log(arr.includes('10'));     // 6
+    }`
+
+    let functionObj = parse(code);
+    let cfg = CFGGenerator.generateCfg2(functionObj);
+    let cdg = CDGGenerator.generateCDG(cfg);
+    let ddg = DDGGenerator.generateDDG(cfg);
+    let pdg = PDGGenerator.generatePDG(cdg,ddg);
+    let entryNode = pdg._nodes.find(n => n._id === CDGNodeNames.ENTRY);
+    
+    
+    expectHasControlEdge(pdg, entryNode._id, 1);
+    expectHasControlEdge(pdg, entryNode._id, 2);
+    expectHasControlEdge(pdg, entryNode._id, 6);
+    expectHasControlEdge(pdg, entryNode._id, 7);
+    expectHasControlEdge(pdg, 2, 3);
+    expectHasControlEdge(pdg, 2, 4);
+    expectHasControlEdge(pdg, 4, 5);
+
+    expectHasDataEdge(pdg, 1, 2); 
+    expectHasDataEdge(pdg, 1, 3);
+    expectHasDataEdge(pdg, 1, 6);
+    expectHasDataEdge(pdg, 3, 4);
+    expectHasDataEdge(pdg, 3, 5);
+    expectHasDataEdge(pdg, 3, 6);
+    
+    showPDG(pdg, "PDGTest24");
+
+});
+
+
+// Arrays - 2D Array & Iterations
+it("PDG25", () =>{
+    let code = `
+    function foo(){
+        let arr = [[1,2,3],[4,5,6],[7,8,9]]; // 1
+        for (let i=0; i < arr.length; i++){  // 2,3,8
+            for (let j=0; j < arr[i].length; j++){ // 4,5,7
+                console.log(arr[i][j]);         // 6
+            }   
+        }
+    }`
+
+    let functionObj = parse(code);
+    let cfg = CFGGenerator.generateCfg2(functionObj);
+    let cdg = CDGGenerator.generateCDG(cfg);
+    let ddg = DDGGenerator.generateDDG(cfg);
+    let pdg = PDGGenerator.generatePDG(cdg,ddg);
+    let entryNode = pdg._nodes.find(n => n._id === CDGNodeNames.ENTRY);
+    
+    expectHasControlEdge(pdg, entryNode._id, 1);
+    expectHasControlEdge(pdg, entryNode._id, 2);
+    expectHasControlEdge(pdg, entryNode._id, 3);
+    expectHasControlEdge(pdg, entryNode._id, 9);
+    expectHasControlEdge(pdg, 3, 4);
+    expectHasControlEdge(pdg, 3, 5);
+    expectHasControlEdge(pdg, 3, 8);
+    expectHasControlEdge(pdg, 5, 6);
+    expectHasControlEdge(pdg, 5, 7);
+    
+    expectHasDataEdge(pdg, 1, 3); 
+    expectHasDataEdge(pdg, 1, 5);
+    expectHasDataEdge(pdg, 1, 6);
+    expectHasDataEdge(pdg, 2, 3);
+    expectHasDataEdge(pdg, 2, 5);
+    expectHasDataEdge(pdg, 2, 6);
+    expectHasDataEdge(pdg, 2, 8);
+    expectHasDataEdge(pdg, 4, 5);
+    expectHasDataEdge(pdg, 4, 6);
+    expectHasDataEdge(pdg, 4, 7);
+    expectHasDataEdge(pdg, 7, 5);
+    expectHasDataEdge(pdg, 7, 6);
+    expectHasDataEdge(pdg, 7, 7);
+    expectHasDataEdge(pdg, 8, 3);
+    expectHasDataEdge(pdg, 8, 5);
+    expectHasDataEdge(pdg, 8, 6);
+    expectHasDataEdge(pdg, 8, 8);
+    
+    showPDG(pdg, "PDGTest25");
+
+});
+
+
+// Arrays - Element Access & Redefinition
+it("PDG26", () =>{
+    let code = `
+    function foo(){
+        let arr = [1,2,3,4];    // 1
+        while (arr.length > 0){ // 2
+            let first = arr[0]; // 3
+            let double = first * 2; // 4
+            arr[0] = double;        // 5
+            arr.shift();            // 6
+        }
+        console.log(arr.length); // 7
+    }`
+
+    let functionObj = parse(code);
+    let cfg = CFGGenerator.generateCfg2(functionObj);
+    let cdg = CDGGenerator.generateCDG(cfg);
+    let ddg = DDGGenerator.generateDDG(cfg);
+    let pdg = PDGGenerator.generatePDG(cdg,ddg);
+    let entryNode = pdg._nodes.find(n => n._id === CDGNodeNames.ENTRY);
+    
+    
+    expectHasControlEdge(pdg, entryNode._id, 1);
+    expectHasControlEdge(pdg, entryNode._id, 2);
+    expectHasControlEdge(pdg, entryNode._id, 7);
+    expectHasControlEdge(pdg, entryNode._id, 8);
+    expectHasControlEdge(pdg, 2, 3);
+    expectHasControlEdge(pdg, 2, 4);
+    expectHasControlEdge(pdg, 2, 5);
+    expectHasControlEdge(pdg, 2, 6);
+    
+    expectHasDataEdge(pdg, 1, 2); 
+    expectHasDataEdge(pdg, 1, 3);
+    expectHasDataEdge(pdg, 1, 5); // using arr to redefine arr[0] (arr)
+    expectHasDataEdge(pdg, 1, 7);
+    expectHasDataEdge(pdg, 3, 4);
+    expectHasDataEdge(pdg, 4, 5);
+    expectHasDataEdge(pdg, 5, 6);
+    expectHasDataEdge(pdg, 6, 2);
+    expectHasDataEdge(pdg, 6, 3);
+    expectHasDataEdge(pdg, 6, 5);
+    expectHasDataEdge(pdg, 6, 7);
+    
+    showPDG(pdg, "PDGTest26");
+
+});
+
+
 
 
 /*
 // Shadowing - Nested Loops
-it("PDG24", () =>{
+it("PDGZ", () =>{
     let code = `
     function foo() {
         let sum = 0;                        // 1
@@ -923,7 +1065,7 @@ it("PDG24", () =>{
     // missing 4->4
     // etc
     
-    showPDG(pdg, "PDGTest24");
+    showPDG(pdg, "PDGTestZ");
 });
 */
 
