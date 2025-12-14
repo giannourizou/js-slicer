@@ -289,6 +289,7 @@ it("DDG9 - Arrays - Simple Access", () => {
  * 
 */
 
+
 it("DDG10a - Arrays - Update Element", () =>{
     let code =`
     function foo() {
@@ -613,6 +614,7 @@ it("DDG20 - Throw Statement", () =>{
  * 
 */
 
+
 it("DDG21a - Object Property Use", () =>{
     let code = `
     function foo() {
@@ -812,6 +814,49 @@ it("DDG25 - Shadowing - Loop", () => {
     expectHasEdge(ddg, 10, 6); // def-use(i)
     expectHasEdge(ddg, 10, 8); // def-use(i)
     expectHasEdge(ddg, 10, 10); // def-use(i)
+
+});
+    
+it("DDG25 - Shadowing - Double loop & Nesting", () => {
+    let code = `
+    function foo() {
+        let sum = 0;                        // 1
+        for (let i = 0; i < 3; i++) {       // 2, 3, 11
+            sum += i;                       // 4 
+            if (i > 0) {                    // 5
+                let sum = 10;               // 6 
+                for (let j = 0; j < 2; j++) { // 7, 8, 10
+                    sum += j;               // 9 
+                }
+            }
+        }
+        return sum;                         // 12
+    }`
+
+    let functionObj = parse(code);
+    let cfg = CFGGenerator.generateCfg2(functionObj);
+    let ddg = DDGGenerator.generateDDG(cfg);
+    
+    expectHasEdge(ddg, 1, 4);  // outer sum
+    expectHasEdge(ddg, 1, 12); // outer sum
+    expectHasEdge(ddg, 2, 3); // i
+    expectHasEdge(ddg, 2, 4); // i
+    expectHasEdge(ddg, 2, 5); // i
+    expectHasEdge(ddg, 2, 11); // i
+    expectHasEdge(ddg, 4, 4); // outer sum
+    expectHasEdge(ddg, 4, 12); // outer sum
+    expectHasEdge(ddg, 6, 9); // inner sum
+    expectHasEdge(ddg, 7, 8); // j
+    expectHasEdge(ddg, 7, 9); // j
+    expectHasEdge(ddg, 7, 10); // j
+    expectHasEdge(ddg, 9, 9); // inner sum
+    expectHasEdge(ddg, 10, 8); // j
+    expectHasEdge(ddg, 10, 9); // j
+    expectHasEdge(ddg, 10, 10); // j
+    expectHasEdge(ddg, 11, 3); // i
+    expectHasEdge(ddg, 11, 4); // i
+    expectHasEdge(ddg, 11, 5); // i
+    expectHasEdge(ddg, 11, 11); // i
 
 });
 

@@ -233,7 +233,6 @@ class CFG {
     getVariableDependency(fromNode, toNode, paths) {
         if (fromNode._statement == null || toNode._statement == null) return [];
 
-        //console.log(`Apo ${fromNode._id} Se ${toNode._id}`);
         let sourceNodeUsedVars = fromNode._statement.getUsedVariableNames();
         let destNodeUsedVars = toNode._statement.getUsedVariableNames();
 
@@ -242,17 +241,13 @@ class CFG {
         let destNodeDeclaredVar = typeof toNode._statement.getDefinedVariable === "function" ?
             toNode._statement.getDefinedVariable() : [];
 
-
         sourceNodeUsedVars = sourceNodeUsedVars ? sourceNodeUsedVars.flatMap(this.extractUsedVarNames) : [];
         destNodeUsedVars = destNodeUsedVars ? destNodeUsedVars.flatMap(this.extractUsedVarNames) : [];
-        
-        //console.log(`${fromNode._id} declares: ${sourceNodeDeclaredVar}, uses: ${sourceNodeUsedVars}`);
 
         let allVars = _.uniq(sourceNodeUsedVars.concat(destNodeUsedVars));
         if (sourceNodeDeclaredVar) allVars = allVars.concat(sourceNodeDeclaredVar);
         if (destNodeDeclaredVar) allVars = allVars.concat(destNodeDeclaredVar);
         allVars = _.uniq(allVars);
-        //console.log(allVars);
 
         let variableDependencyList = [];
         /*
@@ -271,7 +266,7 @@ class CFG {
         for (let i in allVars) {
             let variable = allVars[i];
 
-            if (toNode._statement instanceof VariableDeclaration) {
+            if (toNode._statement instanceof VariableDeclaration){
                 if (destNodeDeclaredVar.includes(variable)) continue;
             }
 
@@ -280,32 +275,31 @@ class CFG {
                     .filter((nodeId) => nodeId !== fromNode._id && nodeId !== toNode._id)
                     .map((nodeId) => this.getNodeById(nodeId));
                 let hasInterveningDefinition = remainingNodes.some((rNode) => {
-                    let rNodeDeclaredVar = typeof rNode._statement.getDefinedVariable === "function" ?
-                        rNode._statement.getDefinedVariable() : undefined;
-                    rNodeDeclaredVar = rNodeDeclaredVar ? rNodeDeclaredVar.flatMap(this.extractDeclaredVarNames) : [];
-                    //console.log(`Node ${rNode._id} declares ${rNodeDeclaredVar}
- 
-                    return rNodeDeclaredVar && rNodeDeclaredVar.includes(variable);
+                    let rNodeDeclaredVar = typeof rNode._statement.getDefinedVariable === "function" ? rNode._statement.getDefinedVariable() : undefined;
+                    if (rNodeDeclaredVar && rNodeDeclaredVar.includes(variable)) {
+                        return !(rNode._statement instanceof VariableDeclaration); 
+                    }
+                    return false;
                 });
-
-                //console.log(`\nChecking ${fromNode._id} → ${toNode._id} for variable '${variable}'`);
 
                 let def_use = false;
                 if (sourceNodeDeclaredVar && sourceNodeDeclaredVar.includes(variable) && destNodeUsedVars.includes(variable)){
-                    if (fromNode._nesting > toNode._nesting) {   
-                        if (fromNode._statement instanceof VariableDeclaration) { 
+                    if (fromNode._nesting !== toNode._nesting) {   
+                        if (fromNode._nesting > toNode._nesting && fromNode._statement instanceof VariableDeclaration) { 
                             // Inner def shouldn't reach outer use
                             def_use = false;
                         }else {
-                            // If there is a def in the same scope as fromNode between fromNode and toNode
-                            // Don't consider def-use dependency
-                            def_use = !(this._nodes.some((n) => 
-                            n._scope === fromNode._scope &&
+                            // Check if there exists a node:
+                            // In a scope between fromNode and toNode
+                            // That shadows the fromNode definition
+                            def_use = !(this._nodes.some((n) =>
+                            n._scope > Math.min(fromNode._scope, toNode._scope) &&
+                            n._scope <= Math.max(fromNode._scope, toNode._scope) &&
                             n._statement instanceof VariableDeclaration &&
                             n._statement.getDefinedVariable().includes(variable)));
                         }
-                    }
-                    else if (fromNode._nesting === toNode._nesting && fromNode._scope !== toNode._scope) {
+                    }else if (fromNode._scope !== toNode._scope) {
+                        // Same nesting, check scope access
                         def_use = this.hasAccessToNode(toNode, fromNode._scope, toNode._scope); 
                     }else {
                         def_use = true;
@@ -316,8 +310,6 @@ class CFG {
                 let use_def = sourceNodeUsedVars.includes(variable) && destNodeDeclaredVar && destNodeDeclaredVar.includes(variable);
                 let def_def = sourceNodeDeclaredVar && sourceNodeDeclaredVar.includes(variable) && destNodeDeclaredVar && destNodeDeclaredVar.includes(variable);
                 */
-
-                //console.log(`Nodes ${fromNode._id} & ${toNode._id} def_use: ${def_use}`);
 
                 return !hasInterveningDefinition && def_use;
             });
@@ -331,10 +323,6 @@ class CFG {
         names = [];
         if (item?.getUsedVariableNames) {names = names.concat(item.getUsedVariableNames().flatMap(this.extractUsedVarNames));}
         return names;
-    }
-
-    extractDeclaredVarNames = (item) => {
-        if (typeof item === 'string') return [item];
     }
 
     // Check if node X's variables are accessible from node Y
