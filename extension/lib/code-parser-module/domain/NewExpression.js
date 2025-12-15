@@ -12,7 +12,13 @@ class NewExpression {
     }
 
     getUsedVariableNames(){
-        return this._args;
+        let varArray = [];
+        this.args.forEach((ar) => {
+            if (ar.getUsedVariableNames) {
+                varArray = varArray.concat(ar.getUsedVariableNames());
+            }
+        });
+        return varArray;
     }
 
     asText() {

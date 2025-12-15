@@ -17,10 +17,10 @@ class ArrayExpression {
 
     getUsedVariableNames() {
         let varArray = [];
-        this._elements?.forEach((e) => {
-            if (e?.getUsedVariableNames) {
+        this._elements.forEach((e) => {
+            if (e.getUsedVariableNames) {
                 varArray = varArray.concat(e.getUsedVariableNames());
-            } else if (e?._name) {
+            } else if (e._name) {
                 varArray.push(e._name);
             }
         });

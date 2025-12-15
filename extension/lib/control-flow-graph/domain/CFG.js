@@ -167,7 +167,7 @@ class CFG {
         })
         return allPathsToNode;
     }
-
+    
     getPathsToNode(startID, exitID, visited = new Set()){
         if (startID === exitID && visited.size > 0) return [[exitID]];
         if (visited.has(startID)) return [];
@@ -184,7 +184,7 @@ class CFG {
         })
         return allPathsToNode;
     }
-    
+
     getTopologies() {
         return this._nodes.flatMap((source) => 
             this._nodes
@@ -233,16 +233,18 @@ class CFG {
     getVariableDependency(fromNode, toNode, paths) {
         if (fromNode._statement == null || toNode._statement == null) return [];
 
-        let sourceNodeUsedVars = fromNode._statement.getUsedVariableNames();
-        let destNodeUsedVars = toNode._statement.getUsedVariableNames();
+        let sourceNodeUsedVars = typeof fromNode._statement.getUsedVariableNames === "function" ? 
+            fromNode._statement.getUsedVariableNames() : [];
+        let destNodeUsedVars = typeof toNode._statement.getUsedVariableNames === "function" ?
+            toNode._statement.getUsedVariableNames() : [];
 
         let sourceNodeDeclaredVar = typeof fromNode._statement.getDefinedVariable === "function" ?
             fromNode._statement.getDefinedVariable() : [];
         let destNodeDeclaredVar = typeof toNode._statement.getDefinedVariable === "function" ?
             toNode._statement.getDefinedVariable() : [];
 
-        sourceNodeUsedVars = sourceNodeUsedVars ? sourceNodeUsedVars.flatMap(this.extractUsedVarNames) : [];
-        destNodeUsedVars = destNodeUsedVars ? destNodeUsedVars.flatMap(this.extractUsedVarNames) : [];
+        //sourceNodeUsedVars = sourceNodeUsedVars ? sourceNodeUsedVars.flatMap(this.extractUsedVarNames) : [];
+        //destNodeUsedVars = destNodeUsedVars ? destNodeUsedVars.flatMap(this.extractUsedVarNames) : [];
 
         let allVars = _.uniq(sourceNodeUsedVars.concat(destNodeUsedVars));
         if (sourceNodeDeclaredVar) allVars = allVars.concat(sourceNodeDeclaredVar);
@@ -318,12 +320,6 @@ class CFG {
         return variableDependencyList.length ? variableDependencyList : [];
     }
 
-    extractUsedVarNames = (item) => {
-        if (typeof item === 'string') return [item];
-        names = [];
-        if (item?.getUsedVariableNames) {names = names.concat(item.getUsedVariableNames().flatMap(this.extractUsedVarNames));}
-        return names;
-    }
 
     // Check if node X's variables are accessible from node Y
     // Based on scope value, by traversing up the scope chain

@@ -8,7 +8,7 @@ class ThrowStatement {
     }
 
     getUsedVariableNames(){
-        return [this._argument];
+        return [this._argument._name];
     }
 
     asText() {

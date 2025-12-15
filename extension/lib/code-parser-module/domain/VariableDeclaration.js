@@ -39,18 +39,18 @@ class VariableDeclaration {
     }
 
     getUsedVariableNames() {
-        return this._values;
+        let varArray = [];
+        this._values.forEach((v) => {
+            if (v.getUsedVariableNames) {
+                varArray = varArray.concat(v.getUsedVariableNames());
+            }
+        });
+        return varArray;
     }
 
     getDefinedVariable() {
         let defVars = [];
-
-        this._names.forEach((name) => {
-            if (name?._name) {
-                defVars.push(name._name);
-            }
-        });
-
+        this._names.forEach(name => defVars.push(name._name));
         return defVars;
     }
 

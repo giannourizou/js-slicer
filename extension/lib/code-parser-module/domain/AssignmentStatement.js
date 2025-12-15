@@ -49,7 +49,6 @@ class AssignmentStatement {
             }
         }
 
-        
         if (this._left instanceof MemberExpression) {
             varArray.push(this._left._object._name);
             if (this._left._computed && this._left._property._name) {
@@ -57,7 +56,6 @@ class AssignmentStatement {
             }
         }
         
-
         return varArray;
     }
 
