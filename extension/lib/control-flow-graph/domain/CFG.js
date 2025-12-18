@@ -99,7 +99,7 @@ class CFG {
             let exitNode = this.getExitNode();
             pathsToExit = this.FDTgetPathsToNode(node._id, exitNode._id);
 
-            // Node X dominates node Y, if every path from Y to EXIT passes through X
+            // Formal Definition: A node X is post-dominated by a node Y in G if every directed path from X to EXIT (not including X) contains Y. 
             let nodeDominants = [];
             let rest = this._nodes.filter((n) => n._id !== node._id);
             rest.forEach((node) => {
@@ -242,9 +242,6 @@ class CFG {
             fromNode._statement.getDefinedVariable() : [];
         let destNodeDeclaredVar = typeof toNode._statement.getDefinedVariable === "function" ?
             toNode._statement.getDefinedVariable() : [];
-
-        //sourceNodeUsedVars = sourceNodeUsedVars ? sourceNodeUsedVars.flatMap(this.extractUsedVarNames) : [];
-        //destNodeUsedVars = destNodeUsedVars ? destNodeUsedVars.flatMap(this.extractUsedVarNames) : [];
 
         let allVars = _.uniq(sourceNodeUsedVars.concat(destNodeUsedVars));
         if (sourceNodeDeclaredVar) allVars = allVars.concat(sourceNodeDeclaredVar);

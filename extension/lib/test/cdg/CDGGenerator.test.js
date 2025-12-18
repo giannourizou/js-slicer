@@ -21,6 +21,7 @@ function printCDG(cfg, cdg){
     });
 }
 
+
 it("throws error when CFG is missing", () => {
     expect(() => {
         CDGGenerator.generateCDG(null);
@@ -393,9 +394,8 @@ it("CDG with Switch & Break Statement ", () => {
 });
 
 
-/*
 // Bug: Entry node doesn't connect ENTRY to (first iteration) of node 2
-// Since there's an edge (3->2) for node 2 it doesn't connect to the entry node
+// Clarification: Fomral Definition of CDG does not differentiate between first iteration and subsequent iterations. Hence, the control dependency of the DO-WHILE loop body on the condition is represented even though in the first iteration, the body executes unconditionally.
 it("Do-while-loop", () => {
     let code = `
     function foo(){
@@ -410,7 +410,5 @@ it("Do-while-loop", () => {
     let functionObj = parse(code);
     let cfg = CFGGenerator.generateCfg2(functionObj);
     let cdg = CDGGenerator.generateCDG(cfg);
-    printCDG(cfg,cdg);
 
 });
-*/

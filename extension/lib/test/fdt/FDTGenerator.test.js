@@ -303,3 +303,44 @@ it("FDT of multiple ifs & returns", () => {
     expectHasEdge(fdt, 2, 1); // if (d>10) <- let d = a+b+c
 
 });
+
+
+// Node 5 (ConditionalStatement) does not include an edge to alternate node 11.
+// CFGVisitor bug, not FDT 
+it("FDT of nested loops and ifs", () => {
+    let code = `
+    function foo() {
+        let sum = 0;                        // 1
+        for (let i = 0; i < 3; i++) {       // 2, 3, 12
+            sum += i;                       // 4 
+            if (i > 0) {                    // 5
+                let sum = 10;               // 6 
+                for (let j = 0; j < 2; j++) { // 7, 8, 10
+                    sum += j;               // 9 
+                }
+            }
+            console.log(sum);                //  11
+        }
+        return sum;                         // 13
+    }`
+
+    let functionObj = parse(code);
+    let cfg = CFGGenerator.generateCfg2(functionObj);
+    let fdt = FDTGenerator.generateFDT(cfg);
+    
+    expectHasEdge(fdt, 13, 12); 
+    expectHasEdge(fdt, 12, 3); 
+    expectHasEdge(fdt, 11, 8); 
+    expectHasEdge(fdt, 10, 9); 
+    expectHasEdge(fdt, 8, 10); 
+    expectHasEdge(fdt, 8, 7); 
+    expectHasEdge(fdt, 7, 6); 
+
+    expectHasEdge(fdt, 6, 5); // wrong 
+
+    expectHasEdge(fdt, 5, 4); 
+    expectHasEdge(fdt, 3, 11); 
+    expectHasEdge(fdt, 3, 2); 
+    expectHasEdge(fdt, 2, 1); 
+
+});

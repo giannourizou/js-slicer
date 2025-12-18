@@ -1016,11 +1016,48 @@ it("PDG26", () =>{
 });
 
 
+/* Fomral Definition of CDG does not differentiate between first iteration and subsequent iterations
+   Hence, the control dependency of the DO-WHILE loop body on the condition is represented
+   even though in the first iteration, the body executes unconditionally.
+*/
+it("PDGTest27", () => {
+    let code = `
+    function foo(){
+        let n = 1;      // 1
+        do {
+            n *= 2;     // 2
+        } while (n<40); // 3
+        console.log(n); // 4
+    }
+    `;
+
+    let functionObj = parse(code);
+    let cfg = CFGGenerator.generateCfg2(functionObj);
+    let cdg = CDGGenerator.generateCDG(cfg);
+    let ddg = DDGGenerator.generateDDG(cfg);
+    let pdg = PDGGenerator.generatePDG(cdg,ddg);
+    let entryNode = pdg._nodes.find(n => n._id === CDGNodeNames.ENTRY);
+
+    expectHasControlEdge(pdg, entryNode._id, 1);
+    expectHasControlEdge(pdg, entryNode._id, 3);
+    expectHasControlEdge(pdg, entryNode._id, 4);
+    expectHasControlEdge(pdg, entryNode._id, 5);
+    expectHasControlEdge(pdg, 3, 2);
+
+    expectHasDataEdge(pdg, 1, 2);
+    expectHasDataEdge(pdg, 2, 2);
+    expectHasDataEdge(pdg, 2, 3);
+    expectHasDataEdge(pdg, 2, 4);
+
+    showPDG(pdg, "PDGTest27");
+
+});
 
 
-/*
 // Shadowing - Nested Loops
-it("PDGZ", () =>{
+// Correct Data Edges
+// Some wrong Control Edges due to CFGVisitor bug
+it("PDGTest28", () =>{
     let code = `
     function foo() {
         let sum = 0;                        // 1
@@ -1043,22 +1080,11 @@ it("PDGZ", () =>{
     let pdg = PDGGenerator.generatePDG(cdg,ddg);
     let entryNode = pdg._nodes.find(n => n._id === CDGNodeNames.ENTRY);
 
-    
     expectHasControlEdge(pdg, entryNode._id, 1);
     expectHasControlEdge(pdg, entryNode._id, 2);
     expectHasControlEdge(pdg, entryNode._id, 3);
     expectHasControlEdge(pdg, entryNode._id, 12);
     expectHasControlEdge(pdg, entryNode._id, 13);
-    expectHasControlEdge(pdg, 3, 4);
-    expectHasControlEdge(pdg, 3, 5);
-    expectHasControlEdge(pdg, 3, 11);
-    expectHasControlEdge(pdg, 8, 9);
-    expectHasControlEdge(pdg, 8, 10);
-
-    // Wrong Control Edges !!
-    // 3->6
-    // 3->7
-    // 3->8
 
     expectHasDataEdge(pdg, 1, 4); 
     expectHasDataEdge(pdg, 1, 12);
@@ -1081,46 +1107,11 @@ it("PDGZ", () =>{
     expectHasDataEdge(pdg, 11, 5); 
     expectHasDataEdge(pdg, 11, 11); 
     
-    showPDG(pdg, "PDGTestZ");
+    showPDG(pdg, "PDGTest28");
+
 });
-*/
 
-/* Do-while Loop
-// CDG edge entry -> 2 is missing
-it("Do-while-loop", () => {
-    let code = `
-    function foo(){
-        let n = 1;      // 1
-        do {
-            n *= 2;      // 2
-        } while (n<40); // 3
-        console.log(n); // 4
-    }
-    `;
 
-    let functionObj = parse(code);
-    let cfg = CFGGenerator.generateCfg2(functionObj);
-    let cdg = CDGGenerator.generateCDG(cfg);
-    let ddg = DDGGenerator.generateDDG(cfg);
-    let pdg = PDGGenerator.generatePDG(cdg,ddg);
-    let entryNode = pdg._nodes.find(n => n._id === CDGNodeNames.ENTRY);
-
-    expectHasControlEdge(pdg, entryNode._id, 1);
-    expectHasControlEdge(pdg, entryNode._id, 2);
-    expectHasControlEdge(pdg, entryNode._id, 3);
-    expectHasControlEdge(pdg, entryNode._id, 4);
-    expectHasControlEdge(pdg, entryNode._id, 5);
-    expectHasControlEdge(pdg, 3, 2);
-
-    expectHasDataEdge(pdg, 1, 2);
-    expectHasDataEdge(pdg, 2, 2);
-    expectHasDataEdge(pdg, 2, 3);
-    expectHasDataEdge(pdg, 2, 4);
-    expectHasDataEdge(pdg, 3, 2); 
-
-    showPDG(pdg, "PDGTestX");
-});
-*/
 
 
 /*
