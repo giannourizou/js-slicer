@@ -1308,6 +1308,7 @@ it("PDGTest34", () => {
     expectHasControlEdge(pdg, 4, 5);
     expectHasControlEdge(pdg, 4, 6);
     
+    expectHasDataEdge(pdg, 1, 2);
     expectHasDataEdge(pdg, 1, 6);
 
     showPDG(pdg, "PDGTest34");
@@ -1316,7 +1317,7 @@ it("PDGTest34", () => {
 
 
 // Composite Conditions: Negation of expressions within ternary statements
-it("PDGTest35!", () => {
+it("PDGTest35", () => {
     let code = `
     function foo(){
     let a = 2; // 1
@@ -1361,11 +1362,17 @@ it("PDGTest35!", () => {
     expectHasControlEdge(pdg, 10, 12);
     
     expectHasDataEdge(pdg, 1, 3);
+    expectHasDataEdge(pdg, 1, 4);
+    expectHasDataEdge(pdg, 1, 6);
+    expectHasDataEdge(pdg, 1, 8);
+    expectHasDataEdge(pdg, 1, 10);
     expectHasDataEdge(pdg, 1, 11);
     expectHasDataEdge(pdg, 2, 3);
+    expectHasDataEdge(pdg, 2, 5);
+    expectHasDataEdge(pdg, 2, 6);
+    expectHasDataEdge(pdg, 2, 7);
+    expectHasDataEdge(pdg, 2, 9);
     expectHasDataEdge(pdg, 2, 12);
-
-    // BUG: Missing many data edges to conditions 4,5,6,7,8,9,10
 
     showPDG(pdg, "PDGTest35");
 

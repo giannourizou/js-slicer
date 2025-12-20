@@ -241,7 +241,7 @@ class CompositeConditionsVisitor {
     }
 
     visitConditionalStatement(stmt) {
-        let condStmtVisitor = new CompositeConditionsVisitor(this._id, this._cfg);
+        let condStmtVisitor = new CompositeConditionsVisitor(this._id, this._cfg, this._nesting, this._scope);
         let condResult = condStmtVisitor.visit(stmt.condition, false);
 
         this._id = condResult.id;
@@ -262,7 +262,7 @@ class CompositeConditionsVisitor {
 
         // Visit and process the then statement
         if (stmt._then) {
-            secondVisitor = new CompositeConditionsVisitor(this._id, this._cfg);
+            secondVisitor = new CompositeConditionsVisitor(this._id, this._cfg, this._nesting, this._scope);
 
             let thenResult = secondVisitor.visit(stmt._then, false);
             this._id = thenResult.id;
@@ -278,7 +278,7 @@ class CompositeConditionsVisitor {
 
         // Visit and process the alternate statement
         if (stmt._alternates) {
-            secondVisitor = new CompositeConditionsVisitor(this._id, this._cfg);
+            secondVisitor = new CompositeConditionsVisitor(this._id, this._cfg, this._nesting, this._scope);
 
             let altResult = secondVisitor.visit(stmt._alternates, false);
             this._id = altResult.id;
@@ -312,7 +312,7 @@ class CompositeConditionsVisitor {
         }
 
         // Visit and process the arguement statement
-        let secondVisitor = new CompositeConditionsVisitor(this._id, this._cfg);
+        let secondVisitor = new CompositeConditionsVisitor(this._id, this._cfg, this._nesting, this._scope);
 
         let visitResult = secondVisitor.visit(stmt, false);
 
