@@ -1112,6 +1112,267 @@ it("PDGTest28", () =>{
 });
 
 
+//  Composite conditions: Disjunctive condition
+it("PDGTest30", () => {
+    let code = `
+    function foo(x, y) {
+        let result = 0; // 1
+        if (x > 0 || y < 10) { // 2,3
+            result = 1; // 4
+        }
+        return result; // 5
+    }
+    `;
+
+    let functionObj = parse(code);
+    let cfg = CFGGenerator.generateCfg2(functionObj);
+    let cdg = CDGGenerator.generateCDG(cfg);
+    let ddg = DDGGenerator.generateDDG(cfg);
+    let pdg = PDGGenerator.generatePDG(cdg,ddg);
+    let entryNode = pdg._nodes.find(n => n._id === CDGNodeNames.ENTRY);
+
+    
+    expectHasControlEdge(pdg, entryNode._id, 1);
+    expectHasControlEdge(pdg, entryNode._id, 2);
+    expectHasControlEdge(pdg, entryNode._id, 5);
+    expectHasControlEdge(pdg, entryNode._id, 6);
+    expectHasControlEdge(pdg, 2, 3);
+    expectHasControlEdge(pdg, 2, 4);
+    expectHasControlEdge(pdg, 3, 4);
+
+    expectHasDataEdge(pdg, 1, 5);
+    expectHasDataEdge(pdg, 4, 5);
+
+    showPDG(pdg, "PDGTest30");
+
+});
+
+
+//  Composite conditions: Conjuctive condition
+it("PDGTest31", () => {
+    let code = `
+    function foo(x, y) {
+        let result = 0; // 1
+        if (x > 0 && y < 10 && x > 5) { // 2,3,4
+            result = 1; // 5
+        }
+        return result; // 6
+    }
+    `;
+
+    let functionObj = parse(code);
+    let cfg = CFGGenerator.generateCfg2(functionObj);
+    let cdg = CDGGenerator.generateCDG(cfg);
+    let ddg = DDGGenerator.generateDDG(cfg);
+    let pdg = PDGGenerator.generatePDG(cdg,ddg);
+    let entryNode = pdg._nodes.find(n => n._id === CDGNodeNames.ENTRY);
+
+    expectHasControlEdge(pdg, entryNode._id, 1);
+    expectHasControlEdge(pdg, entryNode._id, 2);
+    expectHasControlEdge(pdg, entryNode._id, 6);
+    expectHasControlEdge(pdg, entryNode._id, 7);
+    expectHasControlEdge(pdg, 2, 3);
+    expectHasControlEdge(pdg, 3, 4);
+    expectHasControlEdge(pdg, 4, 5);
+    
+    expectHasDataEdge(pdg, 1, 6);
+    expectHasDataEdge(pdg, 5, 6);
+
+    showPDG(pdg, "PDGTest31");
+
+});
+
+// Composite conditions: Mixed compound condition
+it("PDGTest32", () => {
+    let code = `
+    function foo(x, y) {
+        let result = 0; // 1
+        if (x > 0 || (y < 10 && x > 5)) { // 2,3,4
+            result = 1; // 5
+        }
+        return result; // 6
+    }
+    `;
+
+    let functionObj = parse(code);
+    let cfg = CFGGenerator.generateCfg2(functionObj);
+    let cdg = CDGGenerator.generateCDG(cfg);
+    let ddg = DDGGenerator.generateDDG(cfg);
+    let pdg = PDGGenerator.generatePDG(cdg,ddg);
+    let entryNode = pdg._nodes.find(n => n._id === CDGNodeNames.ENTRY);
+
+        
+    expectHasControlEdge(pdg, entryNode._id, 1);
+    expectHasControlEdge(pdg, entryNode._id, 2);
+    expectHasControlEdge(pdg, entryNode._id, 6);
+    expectHasControlEdge(pdg, entryNode._id, 7);
+    expectHasControlEdge(pdg, 2, 3);
+    expectHasControlEdge(pdg, 2, 5);
+    expectHasControlEdge(pdg, 3, 4);
+    expectHasControlEdge(pdg, 4, 5);
+
+    expectHasDataEdge(pdg, 1, 6);
+    expectHasDataEdge(pdg, 5, 6);
+
+    showPDG(pdg, "PDGTest32");
+
+});
+
+// Composite Conditions & def-uses within different scopes
+it("PDGTest33!", () => {
+    let code = `
+    function foo() {
+        let x = 10; // 1
+        let y = 15; // 2
+        while (x>0 && y>10){ // 3,4 
+            x--; // 5
+            y--; // 6
+        }
+        if (x === 5 || y === 11) { // 7,8
+            console.log(x,y) // 9
+        }
+    }
+    `;
+
+    let functionObj = parse(code);
+    let cfg = CFGGenerator.generateCfg2(functionObj);
+    let cdg = CDGGenerator.generateCDG(cfg);
+    let ddg = DDGGenerator.generateDDG(cfg);
+    let pdg = PDGGenerator.generatePDG(cdg,ddg);
+    let entryNode = pdg._nodes.find(n => n._id === CDGNodeNames.ENTRY);
+
+    
+    expectHasControlEdge(pdg, entryNode._id, 1);
+    expectHasControlEdge(pdg, entryNode._id, 2);
+    expectHasControlEdge(pdg, entryNode._id, 3);
+    expectHasControlEdge(pdg, entryNode._id, 7);
+    expectHasControlEdge(pdg, entryNode._id, 10);
+    expectHasControlEdge(pdg, 3, 4);
+    expectHasControlEdge(pdg, 4, 5);
+    expectHasControlEdge(pdg, 4, 6);
+    expectHasControlEdge(pdg, 7, 8);
+    expectHasControlEdge(pdg, 7, 9);
+    expectHasControlEdge(pdg, 8, 9);
+
+    
+    expectHasDataEdge(pdg, 1, 3);
+    expectHasDataEdge(pdg, 1, 5);
+    expectHasDataEdge(pdg, 1, 9);
+    expectHasDataEdge(pdg, 1, 7);
+    expectHasDataEdge(pdg, 2, 4);
+    expectHasDataEdge(pdg, 2, 6);
+    expectHasDataEdge(pdg, 2, 8);
+    expectHasDataEdge(pdg, 2, 9);
+    expectHasDataEdge(pdg, 5, 3);
+    expectHasDataEdge(pdg, 6, 4);
+    expectHasDataEdge(pdg, 5, 7);
+    expectHasDataEdge(pdg, 6, 8);
+    expectHasDataEdge(pdg, 6, 6);
+    expectHasDataEdge(pdg, 5, 5);
+
+    // BUG: leipoun 5->9 kai 6->9 data edges
+
+    showPDG(pdg, "PDGTest33");
+
+});
+
+
+// Composite Conditions: Ternary operator
+it("PDGTest34", () => {
+    let code = `
+    function foo(a,b){
+        let c = a+b;    // 1
+        if(c>10 ? a<2 : b<2){ // 2,3,4
+            return a    // 5
+        }
+        else{
+            return c    // 6
+        }
+    }
+    `;
+
+    let functionObj = parse(code);
+    let cfg = CFGGenerator.generateCfg2(functionObj);
+    let cdg = CDGGenerator.generateCDG(cfg);
+    let ddg = DDGGenerator.generateDDG(cfg);
+    let pdg = PDGGenerator.generatePDG(cdg,ddg);
+    let entryNode = pdg._nodes.find(n => n._id === CDGNodeNames.ENTRY);
+    
+    expectHasControlEdge(pdg, entryNode._id, 1);
+    expectHasControlEdge(pdg, entryNode._id, 2);
+    expectHasControlEdge(pdg, entryNode._id, 7);
+    expectHasControlEdge(pdg, 2, 3);
+    expectHasControlEdge(pdg, 2, 4);
+    expectHasControlEdge(pdg, 3, 5);
+    expectHasControlEdge(pdg, 3, 6);
+    expectHasControlEdge(pdg, 4, 5);
+    expectHasControlEdge(pdg, 4, 6);
+    
+    expectHasDataEdge(pdg, 1, 6);
+
+    showPDG(pdg, "PDGTest34");
+
+});
+
+
+// Composite Conditions: Negation of expressions within ternary statements
+it("PDGTest35!", () => {
+    let code = `
+    function foo(){
+    let a = 2; // 1
+    let b = 3; // 2
+    let c = a + b; // 3
+    //ids:     4      5         6       7         8         9     10
+        if( ((a>4 || b<4) && !(b>a)) ? b>20 || !(a>30) : !(b<2 || a>5)){
+            return a    // 11
+        }
+        else{
+            return b    // 12
+        }
+    }
+    `;
+
+    let functionObj = parse(code);
+    let cfg = CFGGenerator.generateCfg2(functionObj);
+    let cdg = CDGGenerator.generateCDG(cfg);
+    let ddg = DDGGenerator.generateDDG(cfg);
+    let pdg = PDGGenerator.generatePDG(cdg,ddg);
+    let entryNode = pdg._nodes.find(n => n._id === CDGNodeNames.ENTRY);
+    
+    
+    expectHasControlEdge(pdg, entryNode._id, 1);
+    expectHasControlEdge(pdg, entryNode._id, 2);
+    expectHasControlEdge(pdg, entryNode._id, 3);
+    expectHasControlEdge(pdg, entryNode._id, 4);
+    expectHasControlEdge(pdg, entryNode._id, 13);
+    expectHasControlEdge(pdg, 4, 5);
+    expectHasControlEdge(pdg, 4, 6);
+    expectHasControlEdge(pdg, 5, 6);
+    expectHasControlEdge(pdg, 5, 9); 
+    expectHasControlEdge(pdg, 6, 7);
+    expectHasControlEdge(pdg, 6, 9);
+    expectHasControlEdge(pdg, 7, 8);
+    expectHasControlEdge(pdg, 7, 11);
+    expectHasControlEdge(pdg, 8, 11);
+    expectHasControlEdge(pdg, 8, 12);
+    expectHasControlEdge(pdg, 9, 10);
+    expectHasControlEdge(pdg, 9, 12);
+    expectHasControlEdge(pdg, 10, 11);
+    expectHasControlEdge(pdg, 10, 12);
+    
+    expectHasDataEdge(pdg, 1, 3);
+    expectHasDataEdge(pdg, 1, 11);
+    expectHasDataEdge(pdg, 2, 3);
+    expectHasDataEdge(pdg, 2, 12);
+
+    // BUG: Missing many data edges to conditions 4,5,6,7,8,9,10
+
+    showPDG(pdg, "PDGTest35");
+
+});
+
+
+
 
 
 /*
