@@ -1219,7 +1219,7 @@ it("PDGTest32", () => {
 });
 
 // Composite Conditions & def-uses within different scopes
-it("PDGTest33!", () => {
+it("PDGTest33", () => {
     let code = `
     function foo() {
         let x = 10; // 1
@@ -1264,13 +1264,13 @@ it("PDGTest33!", () => {
     expectHasDataEdge(pdg, 2, 8);
     expectHasDataEdge(pdg, 2, 9);
     expectHasDataEdge(pdg, 5, 3);
-    expectHasDataEdge(pdg, 6, 4);
-    expectHasDataEdge(pdg, 5, 7);
-    expectHasDataEdge(pdg, 6, 8);
-    expectHasDataEdge(pdg, 6, 6);
     expectHasDataEdge(pdg, 5, 5);
-
-    // BUG: leipoun 5->9 kai 6->9 data edges
+    expectHasDataEdge(pdg, 5, 7);
+    expectHasDataEdge(pdg, 5, 9);
+    expectHasDataEdge(pdg, 6, 4);
+    expectHasDataEdge(pdg, 6, 6);
+    expectHasDataEdge(pdg, 6, 8);
+    expectHasDataEdge(pdg, 6, 9);
 
     showPDG(pdg, "PDGTest33");
 

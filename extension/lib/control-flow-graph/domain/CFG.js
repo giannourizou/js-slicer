@@ -273,38 +273,48 @@ class CFG {
                 let remainingNodes = path
                     .filter((nodeId) => nodeId !== fromNode._id && nodeId !== toNode._id)
                     .map((nodeId) => this.getNodeById(nodeId));
+                    //console.log(path);
                 let hasInterveningDefinition = remainingNodes.some((rNode) => {
                     let rNodeDeclaredVar = typeof rNode._statement.getDefinedVariable === "function" ? rNode._statement.getDefinedVariable() : undefined;
                     if (rNodeDeclaredVar && rNodeDeclaredVar.includes(variable)) {
-                        return !(rNode._statement instanceof VariableDeclaration); 
+                        if (rNode._scope !== fromNode._scope && rNode._scope !== toNode._scope) {
+                            return false;
+                        }
+                        return true;
                     }
                     return false;
                 });
 
                 let def_use = false;
                 if (sourceNodeDeclaredVar && sourceNodeDeclaredVar.includes(variable) && destNodeUsedVars.includes(variable)){
-                    if (fromNode._nesting !== toNode._nesting) {   
-                        if (fromNode._nesting > toNode._nesting && fromNode._statement instanceof VariableDeclaration) { 
-                            // Inner def shouldn't reach outer use
-                            def_use = false;
-                        }else {
-                            // Check if there exists a node:
-                            // In a scope between fromNode and toNode
-                            // That shadows the fromNode definition
-                            def_use = !(this._nodes.some((n) =>
-                            n._scope > Math.min(fromNode._scope, toNode._scope) &&
-                            n._scope <= Math.max(fromNode._scope, toNode._scope) &&
-                            n._statement instanceof VariableDeclaration &&
-                            n._statement.getDefinedVariable().includes(variable)));
-                        }
-                    }else if (fromNode._scope !== toNode._scope) {
-                        // Same nesting, check scope access
-                        def_use = this.hasAccessToNode(toNode, fromNode._scope, toNode._scope); 
-                    }else {
+                    if (fromNode._scope === toNode._scope){
                         def_use = true;
+                    }else if (fromNode._nesting === toNode._nesting){
+                        // Sibling blocks, check scope access
+                        def_use = !(this._nodes.some(node =>
+                            node._scope === fromNode._scope &&
+                            node._statement instanceof VariableDeclaration &&
+                            node._statement.getDefinedVariable().includes(variable)
+                        ));
+                    }else{
+                        // Different scope & nesting:
+                        // Check if there is a declaration 
+                        // in a node between fromNode & toNode scope
+                        // that shadows the initial def.
+                        let minScope = Math.min(fromNode._scope, toNode._scope);
+                        let maxScope = Math.max(fromNode._scope, toNode._scope);
+                        let hasOtherDeclaration = this._nodes.some(node => {
+                            if (node._scope > minScope && node._scope <= maxScope 
+                                && node._statement instanceof VariableDeclaration 
+                                && node._statement.getDefinedVariable().includes(variable)) {
+                                return this.hasAccessToNode(fromNode, node._scope, maxScope);
+                            }
+                            return false; // no other declaration found
+                        });
+                        def_use = !hasOtherDeclaration;
                     }
                 }
-                
+
                 /* Optional Data Dependencies - Needs scope analysis to be accurate
                 let use_def = sourceNodeUsedVars.includes(variable) && destNodeDeclaredVar && destNodeDeclaredVar.includes(variable);
                 let def_def = sourceNodeDeclaredVar && sourceNodeDeclaredVar.includes(variable) && destNodeDeclaredVar && destNodeDeclaredVar.includes(variable);

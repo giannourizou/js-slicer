@@ -279,7 +279,7 @@ it("DDG9 - Arrays - Simple Access", () => {
     expectHasEdge(ddg,3,4); // def-use (y)
 
 })
-    
+
 
 /* ARRAY HANDLING:
  * An array is considered as a single variable.
@@ -817,6 +817,7 @@ it("DDG25 - Shadowing - Loop", () => {
 
 });
     
+
 it("DDG25 - Shadowing - Double loop & Nesting", () => {
     let code = `
     function foo() {
@@ -859,6 +860,59 @@ it("DDG25 - Shadowing - Double loop & Nesting", () => {
     expectHasEdge(ddg, 11, 11); // i
 
 });
+
+
+it("DDG26 - Reassignment shadowing", () => {
+    let code = `
+    function foo() {
+        let x = 10; // 1
+        let y = 15; // 2
+        while (x>0 && y>10){ // 3,4 
+            let x = 0; // 5
+            x--; // 6
+            y--; // 7
+        }
+        if (x === 5 || y === 11) { // 8,9
+            console.log(x,y) // 10
+        }
+    }
+    `;
+
+    let functionObj = parse(code);
+    let cfg = CFGGenerator.generateCfg2(functionObj);
+    let ddg = DDGGenerator.generateDDG(cfg);
+
+    expectHasEdge(ddg, 1, 3);  // x
+    expectHasEdge(ddg, 1, 8);  // x
+    expectHasEdge(ddg, 1, 10);  // x
+
+    expectHasEdge(ddg, 2, 4);  // y
+    expectHasEdge(ddg, 2, 7);  // y
+    expectHasEdge(ddg, 2, 9);  // y
+    expectHasEdge(ddg, 2, 10);  // y
+
+    expectHasEdge(ddg, 5, 6);  // inner x
+
+    expectHasEdge(ddg, 7, 4);  // y
+    expectHasEdge(ddg, 7, 7);  // y
+    expectHasEdge(ddg, 7, 9);  // y
+    expectHasEdge(ddg, 7, 10);  // y
+    
+});
+
+/*
+it("Debugging", () => {
+    let code = `
+    `;
+
+    let functionObj = parse(code);
+    let cfg = CFGGenerator.generateCfg2(functionObj);
+    let ddg = DDGGenerator.generateDDG(cfg);
+
+    
+    
+});
+*/
 
 // UNSUPPORTED TESTS
 // Template Literals
