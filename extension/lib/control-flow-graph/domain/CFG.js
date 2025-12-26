@@ -223,7 +223,7 @@ class CFG {
                         )
                     ) {
                         //console.log(`Creating edge from node ${fromNode._id} to node ${toNode._id}`);
-                        ddgEdges.push(new DDGEdge(fromNode._id, topology._target, vd));
+                        ddgEdges.push(new DDGEdge(fromNode._id, topology._target, vd.variable, vd.types));
                     }
                 });
             });
@@ -243,10 +243,7 @@ class CFG {
         let destNodeDeclaredVar = typeof toNode._statement.getDefinedVariable === "function" ?
             toNode._statement.getDefinedVariable() : [];
 
-        let allVars = _.uniq(sourceNodeUsedVars.concat(destNodeUsedVars));
-        if (sourceNodeDeclaredVar) allVars = allVars.concat(sourceNodeDeclaredVar);
-        if (destNodeDeclaredVar) allVars = allVars.concat(destNodeDeclaredVar);
-        allVars = _.uniq(allVars);
+        let allVars = _.uniq(sourceNodeUsedVars.concat(destNodeUsedVars, sourceNodeDeclaredVar, destNodeDeclaredVar));
 
         let variableDependencyList = [];
         /*
@@ -265,111 +262,75 @@ class CFG {
         for (let i in allVars) {
             let variable = allVars[i];
 
-            if (toNode._statement instanceof VariableDeclaration){
-                if (destNodeDeclaredVar.includes(variable)) continue;
+            // Same name variable declaration, skip
+            if (toNode._statement instanceof VariableDeclaration 
+                && destNodeDeclaredVar?.includes(variable)) {
+                continue;
             }
+
+            if(!this.refersToTheSameVariable(fromNode, toNode, variable)) continue;
 
             let nodesAreDataDependent = paths.some((path) => {
                 let remainingNodes = path
                     .filter((nodeId) => nodeId !== fromNode._id && nodeId !== toNode._id)
                     .map((nodeId) => this.getNodeById(nodeId));
-                    //console.log(path);
                 let hasInterveningDefinition = remainingNodes.some((rNode) => {
                     let rNodeDeclaredVar = typeof rNode._statement.getDefinedVariable === "function" ? rNode._statement.getDefinedVariable() : undefined;
                     if (rNodeDeclaredVar && rNodeDeclaredVar.includes(variable)) {
-                        if (rNode._scope !== fromNode._scope && rNode._scope !== toNode._scope) {
-                            return false;
+                        if (rNode._statement instanceof VariableDeclaration) {
+                            return this.hasAccessToScope(toNode, rNode._scope);
+                        }else{
+                            return true;
                         }
-                        return true;
                     }
                     return false;
                 });
+                if (hasInterveningDefinition) return false;
 
-                let def_use = false;
-                if (sourceNodeDeclaredVar && sourceNodeDeclaredVar.includes(variable) && destNodeUsedVars.includes(variable)){
-                    if (fromNode._scope === toNode._scope){
-                        def_use = true;
-                    }else if (fromNode._nesting === toNode._nesting){
-                        // Sibling blocks, check scope access
-                        def_use = !(this._nodes.some(node =>
-                            node._scope === fromNode._scope &&
-                            node._statement instanceof VariableDeclaration &&
-                            node._statement.getDefinedVariable().includes(variable)
-                        ));
-                    }else{
-                        // Different scope & nesting:
-                        // Check if there is a declaration 
-                        // in a node between fromNode & toNode scope
-                        // that shadows the initial def.
-                        let minScope = Math.min(fromNode._scope, toNode._scope);
-                        let maxScope = Math.max(fromNode._scope, toNode._scope);
-                        let hasOtherDeclaration = this._nodes.some(node => {
-                            if (node._scope > minScope && node._scope <= maxScope 
-                                && node._statement instanceof VariableDeclaration 
-                                && node._statement.getDefinedVariable().includes(variable)) {
-                                return this.hasAccessToNode(fromNode, node._scope, maxScope);
-                            }
-                            return false; // no other declaration found
-                        });
-                        def_use = !hasOtherDeclaration;
-                    }
-                }
-
-                /* Optional Data Dependencies - Needs scope analysis to be accurate
+                let def_use = sourceNodeDeclaredVar && sourceNodeDeclaredVar.includes(variable) && destNodeUsedVars.includes(variable);
+                let def_def = sourceNodeDeclaredVar && sourceNodeDeclaredVar.includes(variable) && destNodeDeclaredVar && destNodeDeclaredVar.includes(variable);
                 let use_def = sourceNodeUsedVars.includes(variable) && destNodeDeclaredVar && destNodeDeclaredVar.includes(variable);
-                */
 
-                let def_def = false;
-                if (sourceNodeDeclaredVar && sourceNodeDeclaredVar.includes(variable) && destNodeDeclaredVar && destNodeDeclaredVar.includes(variable)){
-                    // Exact same logic as def-use path detection 
-                    if (fromNode._scope === toNode._scope){
-                        def_def = true;
-                    }else if (fromNode._nesting === toNode._nesting){
-                        // Sibling blocks, check scope access
-                        def_def = !(this._nodes.some(node =>
-                            node._scope === fromNode._scope &&
-                            node._statement instanceof VariableDeclaration &&
-                            node._statement.getDefinedVariable().includes(variable)
-                        ));
-                    }else{
-                        // Different scope & nesting:
-                        // Check if there is a declaration 
-                        // in a node between fromNode & toNode scope
-                        // that shadows the initial def.
-                        let minScope = Math.min(fromNode._scope, toNode._scope);
-                        let maxScope = Math.max(fromNode._scope, toNode._scope);
-                        let hasOtherDeclaration = this._nodes.some(node => {
-                            if (node._scope > minScope && node._scope <= maxScope 
-                                && node._statement instanceof VariableDeclaration 
-                                && node._statement.getDefinedVariable().includes(variable)) {
-                                return this.hasAccessToNode(fromNode, node._scope, maxScope);
-                            }
-                            return false; // no other declaration found
-                        });
-                        def_def = !hasOtherDeclaration;
-                    }
-                }
-
-                //console.log(`Node ${fromNode._id} to Node ${toNode._id} for variable ${variable}`);
-                //console.log(`Def_use: ${def_use} and Def_def: ${def_def}`);
-                return !hasInterveningDefinition && (def_use || def_def);
+                types = [];
+                if (def_use) types.push("def-use");
+                if (def_def) types.push("def-def");
+                if (use_def) types.push("use-def");
+                
+                return (def_use || def_def || use_def);
 
             });
-            if (nodesAreDataDependent) variableDependencyList.push(variable);
+            if (nodesAreDataDependent) variableDependencyList.push({variable: variable, types: types});
         }
         return variableDependencyList.length ? variableDependencyList : [];
     }
 
 
-    // Check if node X's variables are accessible from node Y
+    // Check if the closest declaration of variable can reach toNode's scope
+    refersToTheSameVariable(fromNode, toNode, variable){
+        let declarations = this._nodes.filter(n =>
+            n._statement instanceof VariableDeclaration &&
+            n._statement.getDefinedVariable().includes(variable) &&
+            this.hasAccessToScope(fromNode, n._scope)
+        );
+        declarations.sort((a, b) => b._scope - a._scope);
+
+        if (declarations[0]) {
+            if (!this.hasAccessToScope(toNode, declarations[0]._scope)) {
+                return false; 
+            }
+        }
+        return true;
+    }
+
+    // Check if node X's variables are accessible from node Y with scope targetScope
     // Based on scope value, by traversing up the scope chain
-    hasAccessToNode(toNode, fromScope, toScope) {
+    hasAccessToScope(node, targetScope) {
         let visited = new Set();
-        let curNode = toNode;
-        let curScope = toScope;
+        let curNode = node;
+        let curScope = node._scope;
 
         while (curScope !== 0 && !visited.has(curNode._id)) {
-            if (curScope === fromScope) return true;
+            if (curScope === targetScope) return true;
             visited.add(curNode._id);
             curScope = Math.min(...curNode._parents.map(p => p._scope));
             if (curNode._parents.length > 0) {

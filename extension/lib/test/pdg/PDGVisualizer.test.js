@@ -14,6 +14,16 @@ function expectHasDataEdge(pdg, source, target) {
     expect(pdg.hasDataEdge(source, target)).toBe(true);
 }
 
+function getDataEdges(pdg){
+    let dataEdges = 0;
+    pdg._nodes.forEach((node) => {
+        node._dataEdges?.forEach((edge) => {
+            dataEdges++;
+        })
+    })
+    return dataEdges;
+}
+
 function showPDG(pdg, filename) {
     let visualizer = new PDGVisualizer(pdg, filename);
     visualizer.exportToDot();
@@ -61,6 +71,8 @@ it("PDG1", () => {
     expectHasControlEdge(pdg, entryNode._id, 1);
     expectHasControlEdge(pdg, entryNode._id, 2);
 
+    expect(getDataEdges(pdg)).toBe(0);
+
     showPDG(pdg, "PDGTest1");
 });
 
@@ -84,6 +96,8 @@ it("PDG2", () => {
     expectHasControlEdge(pdg, entryNode._id, 1);
     expectHasControlEdge(pdg, entryNode._id, 2);
     expectHasControlEdge(pdg, entryNode._id, 3);
+
+    expect(getDataEdges(pdg)).toBe(0);
 
     showPDG(pdg, "PDGTest2");
 });
@@ -110,6 +124,7 @@ it("PDG3", () => {
     expectHasControlEdge(pdg, entryNode._id, 3);
 
     expectHasDataEdge(pdg, 1, 2);
+    expect(getDataEdges(pdg)).toBe(1);
 
     showPDG(pdg, "PDGTest3");
 });
@@ -135,7 +150,8 @@ it("PDG4", () => {
     expectHasControlEdge(pdg, entryNode._id, 2);
     expectHasControlEdge(pdg, entryNode._id, 3);
 
-    // No def-use edges
+    expectHasDataEdge(pdg, 1, 2);
+    expect(getDataEdges(pdg)).toBe(1);
 
     showPDG(pdg, "PDGTest4");
 });
@@ -145,8 +161,8 @@ it("PDG4", () => {
 it("PDG5", () => {
     let code = `
     function foo(x){
-        console.log(x);
-        x = 3;
+        console.log(x); // 1
+        x = 3;          // 2
     }
     `;
 
@@ -161,7 +177,8 @@ it("PDG5", () => {
     expectHasControlEdge(pdg, entryNode._id, 2);
     expectHasControlEdge(pdg, entryNode._id, 3);
 
-    // No def-use edges
+    expectHasDataEdge(pdg, 1, 2);
+    expect(getDataEdges(pdg)).toBe(1);
 
     showPDG(pdg, "PDGTest5");
 });
@@ -195,6 +212,8 @@ it("PDG6", () => {
     expectHasDataEdge(pdg, 1, 3);
     expectHasDataEdge(pdg, 1, 4);
 
+    expect(getDataEdges(pdg)).toBe(3);
+
     showPDG(pdg, "PDGTest6");
 });
 
@@ -223,7 +242,11 @@ it("PDG7", () => {
     expectHasControlEdge(pdg, entryNode._id, 4);
     expectHasControlEdge(pdg, entryNode._id, 5);
 
-    // No def-use edges
+    expectHasDataEdge(pdg, 1, 2);
+    expectHasDataEdge(pdg, 2, 3);
+    expectHasDataEdge(pdg, 3, 4);
+
+    expect(getDataEdges(pdg)).toBe(3);
 
     showPDG(pdg, "PDGTest7");
 });
@@ -256,6 +279,8 @@ it("PDG8", () => {
     expectHasDataEdge(pdg, 2, 4);
     expectHasDataEdge(pdg, 3, 4);
 
+    expect(getDataEdges(pdg)).toBe(3);
+
     showPDG(pdg, "PDGTest8");
 });
 
@@ -285,6 +310,8 @@ it("PDG9", () => {
 
     expectHasDataEdge(pdg, 1, 2);
     expectHasDataEdge(pdg, 1, 3);
+
+    expect(getDataEdges(pdg)).toBe(2);
 
     showPDG(pdg, "PDGTest9");
 });
@@ -325,6 +352,8 @@ it("PDG10", () => {
     expectHasDataEdge(pdg, 1, 5);
     expectHasDataEdge(pdg, 1, 6);
 
+    expect(getDataEdges(pdg)).toBe(5);
+
     showPDG(pdg, "PDGTest10");
 });
 
@@ -354,6 +383,8 @@ it("PDG11", () => {
 
     expectHasDataEdge(pdg, 1, 2);
     expectHasDataEdge(pdg, 1, 3);
+
+    expect(getDataEdges(pdg)).toBe(2);
 
     showPDG(pdg, "PDGTest11");
 });
@@ -389,8 +420,11 @@ it("PDG12", () => {
     expectHasDataEdge(pdg, 1, 4);
     expectHasDataEdge(pdg, 2, 3);
     expectHasDataEdge(pdg, 2, 5);
+    expectHasDataEdge(pdg, 3, 5);
     expectHasDataEdge(pdg, 5, 3);
     expectHasDataEdge(pdg, 5, 5);
+
+    expect(getDataEdges(pdg)).toBe(6);
 
     showPDG(pdg, "PDGTest12");
 });
@@ -440,10 +474,20 @@ it("PDG13", () => {
     expectHasControlEdge(pdg, 2, 9);
 
     expectHasDataEdge(pdg, 1, 2);
+    expectHasDataEdge(pdg, 1, 3);
+    expectHasDataEdge(pdg, 1, 5);
+    expectHasDataEdge(pdg, 1, 7);
+    expectHasDataEdge(pdg, 1, 9);
+    expectHasDataEdge(pdg, 2, 3);
+    expectHasDataEdge(pdg, 2, 5);
+    expectHasDataEdge(pdg, 2, 7);
+    expectHasDataEdge(pdg, 2, 9);
     expectHasDataEdge(pdg, 3, 10);
     expectHasDataEdge(pdg, 5, 10);
     expectHasDataEdge(pdg, 7, 10);
     expectHasDataEdge(pdg, 9, 10);    
+
+    expect(getDataEdges(pdg)).toBe(13);
 
     showPDG(pdg, "PDGTest13");
 });
@@ -484,11 +528,16 @@ it("PDG14", () => {
     expectHasControlEdge(pdg, 3, 5);
     expectHasControlEdge(pdg, 6, 7);
 
+    expectHasDataEdge(pdg, 1, 2);
     expectHasDataEdge(pdg, 2, 5);
     expectHasDataEdge(pdg, 2, 8);
+    expectHasDataEdge(pdg, 3, 4);
     expectHasDataEdge(pdg, 4, 8);
     expectHasDataEdge(pdg, 5, 8);
+    expectHasDataEdge(pdg, 6, 7);
     expectHasDataEdge(pdg, 7, 8);
+
+    expect(getDataEdges(pdg)).toBe(8);
 
     showPDG(pdg, "PDGTest14");
 });
@@ -527,15 +576,21 @@ it("PDG15", () => {
     expectHasDataEdge(pdg, 1, 2);
     expectHasDataEdge(pdg, 1, 5);
     expectHasDataEdge(pdg, 1, 7);
+    expectHasDataEdge(pdg, 2, 7);
     expectHasDataEdge(pdg, 3, 4);
     expectHasDataEdge(pdg, 3, 5);
     expectHasDataEdge(pdg, 3, 6);
+    expectHasDataEdge(pdg, 4, 6);
+    expectHasDataEdge(pdg, 5, 6);
+    expectHasDataEdge(pdg, 5, 7);
     expectHasDataEdge(pdg, 6, 4);
     expectHasDataEdge(pdg, 6, 5);
     expectHasDataEdge(pdg, 6, 6);
     expectHasDataEdge(pdg, 7, 2);
     expectHasDataEdge(pdg, 7, 5);
     expectHasDataEdge(pdg, 7, 7);
+
+    expect(getDataEdges(pdg)).toBe(16);
 
     showPDG(pdg, "PDGTest15");
 });
@@ -574,11 +629,15 @@ it("PDG16", () => {
     expectHasDataEdge(pdg, 2, 3);
     expectHasDataEdge(pdg, 2, 4);
     expectHasDataEdge(pdg, 2, 5);
+    expectHasDataEdge(pdg, 3, 5);
     expectHasDataEdge(pdg, 4, 4);
+    expectHasDataEdge(pdg, 4, 5);
     expectHasDataEdge(pdg, 4, 6);
     expectHasDataEdge(pdg, 5, 4);
     expectHasDataEdge(pdg, 5, 3);
     expectHasDataEdge(pdg, 5, 5);
+
+    expect(getDataEdges(pdg)).toBe(12);
 
     showPDG(pdg, "PDGTest16");
 });
@@ -614,6 +673,8 @@ it("PDG17", () => {
     expectHasDataEdge(pdg, 1, 2);
     expectHasDataEdge(pdg, 1, 3);
     expectHasDataEdge(pdg, 4, 5);
+
+    expect(getDataEdges(pdg)).toBe(3);
 
     showPDG(pdg, "PDGTest17");
 });
@@ -654,11 +715,16 @@ it("PDG18", () => {
     expectHasDataEdge(pdg, 1, 5);
     expectHasDataEdge(pdg, 1, 6);
     expectHasDataEdge(pdg, 1, 7);
+    expectHasDataEdge(pdg, 2, 6);
+    expectHasDataEdge(pdg, 3, 6);
+    expectHasDataEdge(pdg, 5, 6);
     expectHasDataEdge(pdg, 6, 2);
     expectHasDataEdge(pdg, 6, 3);
     expectHasDataEdge(pdg, 6, 5);
     expectHasDataEdge(pdg, 6, 6);
     expectHasDataEdge(pdg, 6, 7);
+
+    expect(getDataEdges(pdg)).toBe(13);
     
     showPDG(pdg, "PDGTest18");
 });
@@ -707,12 +773,16 @@ it("PDG19", () => {
     expectHasControlEdge(pdg, 3, 9);   
     
     expectHasDataEdge(pdg, 1, 3);
+    expectHasDataEdge(pdg, 2, 4);
     expectHasDataEdge(pdg, 2, 6);
     expectHasDataEdge(pdg, 2, 7);
+    expectHasDataEdge(pdg, 2, 9);
     expectHasDataEdge(pdg, 6, 7); // fallthrough
     expectHasDataEdge(pdg, 4, 10);
     expectHasDataEdge(pdg, 7, 10);
     expectHasDataEdge(pdg, 9, 10);
+
+    expect(getDataEdges(pdg)).toBe(9);
     
     showPDG(pdg, "PDGTest19");
 });
@@ -747,6 +817,8 @@ it("PDG20", () => {
     expectHasDataEdge(pdg, 1, 2);
     expectHasDataEdge(pdg, 3, 4);
 
+    expect(getDataEdges(pdg)).toBe(2);
+
     showPDG(pdg, "PDGTest20");
 });
 
@@ -779,7 +851,11 @@ it("PDG21", () =>{
     expectHasDataEdge(pdg, 1, 3); 
     expectHasDataEdge(pdg, 2, 3); 
     expectHasDataEdge(pdg, 3, 4);
+    expectHasDataEdge(pdg, 3, 5);
+    expectHasDataEdge(pdg, 4, 5);
     expectHasDataEdge(pdg, 5, 6); 
+
+    expect(getDataEdges(pdg)).toBe(6);
 
     showPDG(pdg, "PDGTest21");
 });
@@ -822,6 +898,8 @@ it("PDG22", () =>{
     expectHasDataEdge(pdg, 1, 5);
     expectHasDataEdge(pdg, 1, 8);  
     expectHasDataEdge(pdg, 3, 4);
+
+    expect(getDataEdges(pdg)).toBe(4);
     
     showPDG(pdg, "PDGTest22");
 });
@@ -869,6 +947,8 @@ it("PDG23", () =>{
     expectHasDataEdge(pdg, 3, 8);
     expectHasDataEdge(pdg, 5, 6);
     expectHasDataEdge(pdg, 5, 7);
+
+    expect(getDataEdges(pdg)).toBe(6);
     
     showPDG(pdg, "PDGTest23");
 });
@@ -907,12 +987,14 @@ it("PDG24", () =>{
     expectHasDataEdge(pdg, 1, 2); 
     expectHasDataEdge(pdg, 1, 3);
     expectHasDataEdge(pdg, 1, 6);
+    expectHasDataEdge(pdg, 2, 3);
     expectHasDataEdge(pdg, 3, 4);
     expectHasDataEdge(pdg, 3, 5);
     expectHasDataEdge(pdg, 3, 6);
+
+    expect(getDataEdges(pdg)).toBe(7);
     
     showPDG(pdg, "PDGTest24");
-
 });
 
 
@@ -952,9 +1034,14 @@ it("PDG25", () =>{
     expectHasDataEdge(pdg, 2, 5);
     expectHasDataEdge(pdg, 2, 6);
     expectHasDataEdge(pdg, 2, 8);
+    expectHasDataEdge(pdg, 3, 8);
     expectHasDataEdge(pdg, 4, 5);
     expectHasDataEdge(pdg, 4, 6);
     expectHasDataEdge(pdg, 4, 7);
+    expectHasDataEdge(pdg, 5, 7);
+    expectHasDataEdge(pdg, 5, 8);
+    expectHasDataEdge(pdg, 6, 7);
+    expectHasDataEdge(pdg, 6, 8);
     expectHasDataEdge(pdg, 7, 5);
     expectHasDataEdge(pdg, 7, 6);
     expectHasDataEdge(pdg, 7, 7);
@@ -962,9 +1049,10 @@ it("PDG25", () =>{
     expectHasDataEdge(pdg, 8, 5);
     expectHasDataEdge(pdg, 8, 6);
     expectHasDataEdge(pdg, 8, 8);
+
+    expect(getDataEdges(pdg)).toBe(22);
     
     showPDG(pdg, "PDGTest25");
-
 });
 
 
@@ -1003,16 +1091,19 @@ it("PDG26", () =>{
     expectHasDataEdge(pdg, 1, 3);
     expectHasDataEdge(pdg, 1, 5); // using arr to redefine arr[0] (arr)
     expectHasDataEdge(pdg, 1, 7);
+    expectHasDataEdge(pdg, 2, 5);
     expectHasDataEdge(pdg, 3, 4);
+    expectHasDataEdge(pdg, 3, 5);
     expectHasDataEdge(pdg, 4, 5);
     expectHasDataEdge(pdg, 5, 6);
     expectHasDataEdge(pdg, 6, 2);
     expectHasDataEdge(pdg, 6, 3);
     expectHasDataEdge(pdg, 6, 5);
     expectHasDataEdge(pdg, 6, 7);
+
+    expect(getDataEdges(pdg)).toBe(13);
     
     showPDG(pdg, "PDGTest26");
-
 });
 
 
@@ -1047,10 +1138,12 @@ it("PDGTest27", () => {
     expectHasDataEdge(pdg, 1, 2);
     expectHasDataEdge(pdg, 2, 2);
     expectHasDataEdge(pdg, 2, 3);
+    expectHasDataEdge(pdg, 3, 2);
     expectHasDataEdge(pdg, 2, 4);
 
-    showPDG(pdg, "PDGTest27");
+    expect(getDataEdges(pdg)).toBe(5);
 
+    showPDG(pdg, "PDGTest27");
 });
 
 
@@ -1092,13 +1185,18 @@ it("PDGTest28", () =>{
     expectHasDataEdge(pdg, 2, 4); 
     expectHasDataEdge(pdg, 2, 5); 
     expectHasDataEdge(pdg, 2, 11);
+    expectHasDataEdge(pdg, 3, 11);
     expectHasDataEdge(pdg, 4, 4); 
+    expectHasDataEdge(pdg, 4, 11); 
     expectHasDataEdge(pdg, 4, 12);
+    expectHasDataEdge(pdg, 5, 11); 
     expectHasDataEdge(pdg, 6, 9); 
     expectHasDataEdge(pdg, 7, 8); 
     expectHasDataEdge(pdg, 7, 9); 
     expectHasDataEdge(pdg, 7, 10); 
+    expectHasDataEdge(pdg, 8, 10); 
     expectHasDataEdge(pdg, 9, 9); 
+    expectHasDataEdge(pdg, 9, 10);
     expectHasDataEdge(pdg, 10, 8); 
     expectHasDataEdge(pdg, 10, 9); 
     expectHasDataEdge(pdg, 10, 10); 
@@ -1107,13 +1205,14 @@ it("PDGTest28", () =>{
     expectHasDataEdge(pdg, 11, 5); 
     expectHasDataEdge(pdg, 11, 11); 
     
-    showPDG(pdg, "PDGTest28");
+    expect(getDataEdges(pdg)).toBe(25);
 
+    showPDG(pdg, "PDGTest28");
 });
 
 
 //  Composite conditions: Disjunctive condition
-it("PDGTest30", () => {
+it("PDGTest29", () => {
     let code = `
     function foo(x, y) {
         let result = 0; // 1
@@ -1141,15 +1240,17 @@ it("PDGTest30", () => {
     expectHasControlEdge(pdg, 3, 4);
 
     expectHasDataEdge(pdg, 1, 5);
+    expectHasDataEdge(pdg, 1, 4);
     expectHasDataEdge(pdg, 4, 5);
 
-    showPDG(pdg, "PDGTest30");
+    expect(getDataEdges(pdg)).toBe(3);
 
+    showPDG(pdg, "PDGTest29");
 });
 
 
 //  Composite conditions: Conjuctive condition
-it("PDGTest31", () => {
+it("PDGTest30", () => {
     let code = `
     function foo(x, y) {
         let result = 0; // 1
@@ -1175,15 +1276,17 @@ it("PDGTest31", () => {
     expectHasControlEdge(pdg, 3, 4);
     expectHasControlEdge(pdg, 4, 5);
     
+    expectHasDataEdge(pdg, 1, 5);
     expectHasDataEdge(pdg, 1, 6);
     expectHasDataEdge(pdg, 5, 6);
 
-    showPDG(pdg, "PDGTest31");
+    expect(getDataEdges(pdg)).toBe(3);
 
+    showPDG(pdg, "PDGTest30");
 });
 
 // Composite conditions: Mixed compound condition
-it("PDGTest32", () => {
+it("PDGTest31", () => {
     let code = `
     function foo(x, y) {
         let result = 0; // 1
@@ -1211,14 +1314,74 @@ it("PDGTest32", () => {
     expectHasControlEdge(pdg, 3, 4);
     expectHasControlEdge(pdg, 4, 5);
 
+    expectHasDataEdge(pdg, 1, 5);
     expectHasDataEdge(pdg, 1, 6);
     expectHasDataEdge(pdg, 5, 6);
 
-    showPDG(pdg, "PDGTest32");
+    expect(getDataEdges(pdg)).toBe(3);
 
+    showPDG(pdg, "PDGTest31");
 });
 
+
 // Composite Conditions & def-uses within different scopes
+// (declaration of x in a different scope)
+it("PDGTest32", () => {
+    let code = `
+    function foo() {
+        let x = 10; // 1
+        let y = 15; // 2
+        while (x>0 && y>10){ // 3,4 
+            let x = 1; // 5
+            y--; // 6
+        }
+        if (x === 5 || y === 11) { // 7,8
+            console.log(x,y) // 9
+        }
+    }
+    `;
+
+    let functionObj = parse(code);
+    let cfg = CFGGenerator.generateCfg2(functionObj);
+    let cdg = CDGGenerator.generateCDG(cfg);
+    let ddg = DDGGenerator.generateDDG(cfg);
+    let pdg = PDGGenerator.generatePDG(cdg,ddg);
+    let entryNode = pdg._nodes.find(n => n._id === CDGNodeNames.ENTRY);
+
+    
+    expectHasControlEdge(pdg, entryNode._id, 1);
+    expectHasControlEdge(pdg, entryNode._id, 2);
+    expectHasControlEdge(pdg, entryNode._id, 3);
+    expectHasControlEdge(pdg, entryNode._id, 7);
+    expectHasControlEdge(pdg, entryNode._id, 10);
+    expectHasControlEdge(pdg, 3, 4);
+    expectHasControlEdge(pdg, 4, 5);
+    expectHasControlEdge(pdg, 4, 6);
+    expectHasControlEdge(pdg, 7, 8);
+    expectHasControlEdge(pdg, 7, 9);
+    expectHasControlEdge(pdg, 8, 9);
+    
+    expectHasDataEdge(pdg, 1, 3);
+    expectHasDataEdge(pdg, 1, 7);
+    expectHasDataEdge(pdg, 1, 9);
+    expectHasDataEdge(pdg, 2, 4);
+    expectHasDataEdge(pdg, 2, 6);
+    expectHasDataEdge(pdg, 2, 8);
+    expectHasDataEdge(pdg, 2, 9);
+    expectHasDataEdge(pdg, 4, 6);
+    expectHasDataEdge(pdg, 6, 4);
+    expectHasDataEdge(pdg, 6, 6);
+    expectHasDataEdge(pdg, 6, 8);
+    expectHasDataEdge(pdg, 6, 9);
+
+    expect(getDataEdges(pdg)).toBe(12);
+
+    showPDG(pdg, "PDGTest32");
+});
+
+
+// Composite Conditions & def-uses within different scopes
+// (reassignment of x)
 it("PDGTest33", () => {
     let code = `
     function foo() {
@@ -1253,16 +1416,17 @@ it("PDGTest33", () => {
     expectHasControlEdge(pdg, 7, 8);
     expectHasControlEdge(pdg, 7, 9);
     expectHasControlEdge(pdg, 8, 9);
-
     
     expectHasDataEdge(pdg, 1, 3);
     expectHasDataEdge(pdg, 1, 5);
-    expectHasDataEdge(pdg, 1, 9);
     expectHasDataEdge(pdg, 1, 7);
+    expectHasDataEdge(pdg, 1, 9);
     expectHasDataEdge(pdg, 2, 4);
     expectHasDataEdge(pdg, 2, 6);
     expectHasDataEdge(pdg, 2, 8);
     expectHasDataEdge(pdg, 2, 9);
+    expectHasDataEdge(pdg, 3, 5);
+    expectHasDataEdge(pdg, 4, 6);
     expectHasDataEdge(pdg, 5, 3);
     expectHasDataEdge(pdg, 5, 5);
     expectHasDataEdge(pdg, 5, 7);
@@ -1271,6 +1435,8 @@ it("PDGTest33", () => {
     expectHasDataEdge(pdg, 6, 6);
     expectHasDataEdge(pdg, 6, 8);
     expectHasDataEdge(pdg, 6, 9);
+
+    expect(getDataEdges(pdg)).toBe(18);
 
     showPDG(pdg, "PDGTest33");
 
@@ -1310,6 +1476,8 @@ it("PDGTest34", () => {
     
     expectHasDataEdge(pdg, 1, 2);
     expectHasDataEdge(pdg, 1, 6);
+
+    expect(getDataEdges(pdg)).toBe(2);
 
     showPDG(pdg, "PDGTest34");
 
@@ -1374,11 +1542,10 @@ it("PDGTest35", () => {
     expectHasDataEdge(pdg, 2, 9);
     expectHasDataEdge(pdg, 2, 12);
 
+    expect(getDataEdges(pdg)).toBe(12);
+
     showPDG(pdg, "PDGTest35");
-
 });
-
-
 
 
 

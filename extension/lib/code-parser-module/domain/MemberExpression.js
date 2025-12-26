@@ -40,6 +40,9 @@ class MemberExpression {
             varArray.push(this._property._name);
         }
 
+        let builtInObjects = ['Object', 'Function', 'Boolean', 'Symbol', 'console', 'window', 'Math', 'Object', 'Array', 'String', 'RegExp', 'Number', 'Temporal', 'Map', 'Set', 'Date', 'JSON'];
+        varArray.filter( v => !builtInObjects.includes(v));
+
         return varArray;
     }
 

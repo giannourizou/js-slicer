@@ -58,7 +58,7 @@ class PDGVisualizer {
             
             if (node._dataEdges) {
                 for (let edge of node._dataEdges) {
-                    let label = edge._dependantVariable || "";
+                    let label = (edge._dependantVariable || "" )  + " (" + edge._type.join(', ') + ")";
                     digraph += `\t"${edge._source}" -> "${edge._target}" `;
                     digraph += `[style=dashed, color=darkblue, fontcolor=darkblue, penwidth = "1.3", label=" ${label} ", arrowsize=0.8];\n`;
                 }

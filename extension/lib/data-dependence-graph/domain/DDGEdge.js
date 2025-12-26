@@ -1,8 +1,9 @@
 class DDGEdge {
-    constructor(source, target, dependantVariable) {
+    constructor(source, target, dependantVariable, type = []) {
         this._source = source;
         this._target = target;
         this._dependantVariable = dependantVariable;
+        this._type = type; // def-use, def-def, use-def
     }
 
     get dependantVariable() {
@@ -28,6 +29,16 @@ class DDGEdge {
     set target(value) {
         this._target = value;
     }
+
+    get type() {
+        return this._type;
+    }
+
+    set type(value) {
+        this._type = value;
+    }
+
+
 }
 
 module.exports = DDGEdge;
