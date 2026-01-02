@@ -100,7 +100,7 @@ class CFGVisitor {
             exitNodes = stmt.accept(this);
 
             if (exitNodes) {
-                if (exitNodes.list.length === 0) return null;
+                if (exitNodes.list?.length === 0) return null;
                 this._parentStack.push(exitNodes);
             }
         }

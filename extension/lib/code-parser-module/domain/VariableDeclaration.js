@@ -40,8 +40,13 @@ class VariableDeclaration {
 
     getUsedVariableNames() {
         let varArray = [];
+
+        if (!this._values) {
+            return varArray;
+        }
+
         this._values.forEach((v) => {
-            if (v.getUsedVariableNames) {
+            if (v?.getUsedVariableNames) {
                 varArray = varArray.concat(v.getUsedVariableNames());
             }
         });

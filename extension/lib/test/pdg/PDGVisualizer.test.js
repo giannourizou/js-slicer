@@ -1148,8 +1148,6 @@ it("PDGTest27", () => {
 
 
 // Shadowing - Nested Loops
-// Correct Data Edges
-// Some wrong Control Edges due to CFGVisitor bug
 it("PDGTest28", () =>{
     let code = `
     function foo() {
@@ -1178,6 +1176,14 @@ it("PDGTest28", () =>{
     expectHasControlEdge(pdg, entryNode._id, 3);
     expectHasControlEdge(pdg, entryNode._id, 12);
     expectHasControlEdge(pdg, entryNode._id, 13);
+    expectHasControlEdge(pdg, 3, 4);
+    expectHasControlEdge(pdg, 3, 5);
+    expectHasControlEdge(pdg, 3, 11);
+    expectHasControlEdge(pdg, 5, 6);
+    expectHasControlEdge(pdg, 5, 7);
+    expectHasControlEdge(pdg, 5, 8);
+    expectHasControlEdge(pdg, 8, 9);
+    expectHasControlEdge(pdg, 8, 10);
 
     expectHasDataEdge(pdg, 1, 4); 
     expectHasDataEdge(pdg, 1, 12);
@@ -1545,6 +1551,126 @@ it("PDGTest35", () => {
     expect(getDataEdges(pdg)).toBe(12);
 
     showPDG(pdg, "PDGTest35");
+});
+
+// For In & For Of Loops
+it("PDGTest36", () => {
+    let code = `
+    function foo() {
+        let arr = [1, 2, 3]; // 1
+        for (let key in arr) { // 2
+            console.log(key);  // 3 
+        }
+        for (let val of arr) { // 4
+            console.log(arr[val-1]); // 5
+        }
+    }
+    `;
+
+    let functionObj = parse(code);
+    let cfg = CFGGenerator.generateCfg2(functionObj);
+    let cdg = CDGGenerator.generateCDG(cfg);
+    let ddg = DDGGenerator.generateDDG(cfg);
+    let pdg = PDGGenerator.generatePDG(cdg,ddg);
+    let entryNode = pdg._nodes.find(n => n._id === CDGNodeNames.ENTRY);
+
+    expectHasControlEdge(pdg, entryNode._id, 1);
+    expectHasControlEdge(pdg, entryNode._id, 2);
+    expectHasControlEdge(pdg, entryNode._id, 4);
+    expectHasControlEdge(pdg, entryNode._id, 6);
+    expectHasControlEdge(pdg, 2, 3);
+    expectHasControlEdge(pdg, 4, 5);
+
+    expectHasDataEdge(pdg, 1, 5);
+    expectHasDataEdge(pdg, 2, 3);
+    expectHasDataEdge(pdg, 4, 5);
+
+    expect(getDataEdges(pdg)).toBe(3);
+
+    showPDG(pdg, "PDGTest36");
+});
+
+// Arrow function
+it("PDGTest37", () => {
+    let code = `
+    function foo() {
+        let hello = (x) => console.log("hello ", x);  // 1
+        return hello("Mark");           // 2
+    }
+    `;
+
+    let functionObj = parse(code);
+    let cfg = CFGGenerator.generateCfg2(functionObj);
+    let cdg = CDGGenerator.generateCDG(cfg);
+    let ddg = DDGGenerator.generateDDG(cfg);
+    let pdg = PDGGenerator.generatePDG(cdg,ddg);
+    let entryNode = pdg._nodes.find(n => n._id === CDGNodeNames.ENTRY);
+
+    
+    expectHasControlEdge(pdg, entryNode._id, 1);
+    expectHasControlEdge(pdg, entryNode._id, 2);
+    expectHasControlEdge(pdg, entryNode._id, 3);
+
+    expectHasDataEdge(pdg, 1, 2);
+
+    expect(getDataEdges(pdg)).toBe(1);
+    
+    showPDG(pdg, "PDGTest37");
+});
+
+// Await Expression test
+it("PDGTest38", () => {
+    let code = `
+    async function foo() {
+        let url = "..." // 1
+        let result = await fetch(url);  // 2
+        return result;                    // 3
+    }
+    `;
+
+    let functionObj = parse(code);
+    let cfg = CFGGenerator.generateCfg2(functionObj);
+    let cdg = CDGGenerator.generateCDG(cfg);
+    let ddg = DDGGenerator.generateDDG(cfg);
+    let pdg = PDGGenerator.generatePDG(cdg,ddg);
+    let entryNode = pdg._nodes.find(n => n._id === CDGNodeNames.ENTRY);
+
+    
+    expectHasControlEdge(pdg, entryNode._id, 1);
+    expectHasControlEdge(pdg, entryNode._id, 2);
+    expectHasControlEdge(pdg, entryNode._id, 3);
+    expectHasControlEdge(pdg, entryNode._id, 4);
+
+    expectHasDataEdge(pdg, 1, 2);
+    expectHasDataEdge(pdg, 2, 3);
+
+    expect(getDataEdges(pdg)).toBe(2);
+    
+    showPDG(pdg, "PDGTest38");
+});
+
+
+// Bug: 3->4 data edge
+it("PDGTest39!", () => {
+    let code = `
+    function foo() {
+        let x = 5;      // 1
+        {               
+            let x = 10; // 2
+            x = 15;     // 3
+        }               
+        return x;       // 4
+    }
+    `;
+
+    let functionObj = parse(code);
+    let cfg = CFGGenerator.generateCfg2(functionObj);
+    let cdg = CDGGenerator.generateCDG(cfg);
+    let ddg = DDGGenerator.generateDDG(cfg);
+    let pdg = PDGGenerator.generatePDG(cdg,ddg);
+    let entryNode = pdg._nodes.find(n => n._id === CDGNodeNames.ENTRY);
+
+    showPDG(pdg, "PDGTest39");
 });
 
 

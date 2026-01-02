@@ -36,8 +36,8 @@ class FunctionCall {
             }
         }
         
-        let builtInObjects = ['Object', 'Function', 'Boolean', 'Symbol', 'console', 'window', 'Math', 'Object', 'Array', 'String', 'RegExp', 'Number', 'Temporal', 'Map', 'Set', 'Date', 'JSON'];
-        varArray.filter( v => !builtInObjects.includes(v));
+        const builtInObjects = ['Object', 'Function', 'Boolean', 'Symbol', 'console', 'window', 'Math', 'Object', 'Array', 'String', 'RegExp', 'Number', 'Temporal', 'Map', 'Set', 'Date', 'JSON', 'fetch'];
+        varArray = varArray.filter( v => !(builtInObjects.includes(v)));
 
         return varArray;
     }  

@@ -7,6 +7,14 @@ class AwaitExpression {
         return this._argument;
     }
 
+    getUsedVariableNames() {
+        if (!this._argument) return [];
+
+        if (this._argument.getUsedVariableNames) {
+            return this._argument.getUsedVariableNames();
+        }
+    }
+
     asText() {
         return `await ${this._argument.asText()}`;
     }
