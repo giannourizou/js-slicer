@@ -305,9 +305,7 @@ it("FDT of multiple ifs & returns", () => {
 });
 
 
-/* Node 5 (ConditionalStatement) does not include an edge to alternate node 11.
-// CFGVisitor bug, not FDT 
-it("FDT of nested loops and ifs", () => {
+it("FDT of complex if body", () => {
     let code = `
     function foo() {
         let sum = 0;                        // 1
@@ -326,22 +324,46 @@ it("FDT of nested loops and ifs", () => {
 
     let functionObj = parse(code);
     let cfg = CFGGenerator.generateCfg2(functionObj);
-    let fdt = FDTGenerator.generateFDT(cfg);
+    let fdt = FDTGenerator.generateFDT(cfg);    
     
-    expectHasEdge(fdt, 13, 12); 
-    expectHasEdge(fdt, 12, 3); 
-    expectHasEdge(fdt, 11, 8); 
-    expectHasEdge(fdt, 10, 9); 
-    expectHasEdge(fdt, 8, 10); 
-    expectHasEdge(fdt, 8, 7); 
-    expectHasEdge(fdt, 7, 6); 
-
-    expectHasEdge(fdt, 6, 5); // wrong 
-
-    expectHasEdge(fdt, 5, 4); 
-    expectHasEdge(fdt, 3, 11); 
-    expectHasEdge(fdt, 3, 2); 
-    expectHasEdge(fdt, 2, 1); 
+    expectHasEdge(fdt, 14, 13); // exit <- return sum 
+    expectHasEdge(fdt, 13, 3);  // return sum <- i<3 
+    expectHasEdge(fdt, 12, 11); // i++ <- console.log(sum)   
+    expectHasEdge(fdt, 11, 5);  // console.log(sum) <- if (i>0) 
+    expectHasEdge(fdt, 11, 8);  // console.log(sum) <- j<2 
+    expectHasEdge(fdt, 10, 9);  // j++ <- sum+=j 
+    expectHasEdge(fdt, 8, 7);   // j<2 <- let j=0 
+    expectHasEdge(fdt, 8, 10);  // j<2 <- j++
+    expectHasEdge(fdt, 7, 6);   // let j=0 <- let sum=10
+    expectHasEdge(fdt, 5, 4);   // if (i>0) <- sum+=i
+    expectHasEdge(fdt, 3, 2);   // i<3 <- let i=0
+    expectHasEdge(fdt, 3, 12);  // i<3 <- i++
+    expectHasEdge(fdt, 2, 1);   // let i=0 <- let sum=0
 
 });
-*/
+
+
+it("FDT of complex if body 2", () => {
+    let code = `
+    function foo() {
+        let x = 0;                  // 1
+        if (x > 0) {                // 2
+            for (let i = 0; i < 5; i++) { // 3, 4, 6
+                x += i;             // 5
+            }
+        }
+        return x;                   // 7
+    }`
+
+    let functionObj = parse(code);
+    let cfg = CFGGenerator.generateCfg2(functionObj);
+    let fdt = FDTGenerator.generateFDT(cfg);
+    
+    expectHasEdge(fdt, 8, 7); // exit <- return x 
+    expectHasEdge(fdt, 7, 2); // return x <- if x>0 
+    expectHasEdge(fdt, 7, 4); // return x <- i<5
+    expectHasEdge(fdt, 6, 5); // i++ <- x+=i 
+    expectHasEdge(fdt, 4, 3); // i<5 <- let i=0
+    expectHasEdge(fdt, 4, 6); // i<5 <- i++
+    expectHasEdge(fdt, 2, 1); // if x>0 <- let x=0 
+});

@@ -278,6 +278,7 @@ class CFGVisitor {
         let conditionalExitsJoinNode = new JoinNode();
 
         conditionalExitsJoinNode.merge(then.accept(this));
+        this._parentStack.push(decisionNode); 
         conditionalExitsJoinNode.merge(alternates ? alternates.accept(this) : this._parentStack.pop());
 
         //Debug
