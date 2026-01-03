@@ -1634,7 +1634,6 @@ it("PDGTest38", () => {
     let ddg = DDGGenerator.generateDDG(cfg);
     let pdg = PDGGenerator.generatePDG(cdg,ddg);
     let entryNode = pdg._nodes.find(n => n._id === CDGNodeNames.ENTRY);
-
     
     expectHasControlEdge(pdg, entryNode._id, 1);
     expectHasControlEdge(pdg, entryNode._id, 2);
@@ -1649,9 +1648,8 @@ it("PDGTest38", () => {
     showPDG(pdg, "PDGTest38");
 });
 
-
-// Bug: 3->4 data edge
-it("PDGTest39!", () => {
+// Block statement test
+it("PDGTest39", () => {
     let code = `
     function foo() {
         let x = 5;      // 1
@@ -1669,6 +1667,17 @@ it("PDGTest39!", () => {
     let ddg = DDGGenerator.generateDDG(cfg);
     let pdg = PDGGenerator.generatePDG(cdg,ddg);
     let entryNode = pdg._nodes.find(n => n._id === CDGNodeNames.ENTRY);
+
+    expectHasControlEdge(pdg, entryNode._id, 1);
+    expectHasControlEdge(pdg, entryNode._id, 2);
+    expectHasControlEdge(pdg, entryNode._id, 3);
+    expectHasControlEdge(pdg, entryNode._id, 4);
+    expectHasControlEdge(pdg, entryNode._id, 5);
+
+    expectHasDataEdge(pdg, 1, 4);
+    expectHasDataEdge(pdg, 2, 3);
+
+    expect(getDataEdges(pdg)).toBe(2);
 
     showPDG(pdg, "PDGTest39");
 });
@@ -1703,5 +1712,38 @@ it("Try-Catch-Finally Statement", () => {
     let entryNode = pdg._nodes.find(n => n._id === CDGNodeNames.ENTRY);
 
     showPDG(pdg, "PDGTestY");
+});
+*/
+
+/*
+// Expression Statement - Shouldn't define anything
+// CFG Bug: Skips node 3 after ExpressionStatement node
+it("ExpressionStatement", () => {
+    let code = `
+    function foo() {
+        let x = 5;      // 1
+        x + 15;         // 2           
+        return x;       // 3
+    }
+    `;
+
+    let functionObj = parse(code);
+    let cfg = CFGGenerator.generateCfg2(functionObj);
+    let cdg = CDGGenerator.generateCDG(cfg);
+    let ddg = DDGGenerator.generateDDG(cfg);
+    let pdg = PDGGenerator.generatePDG(cdg,ddg);
+    let entryNode = pdg._nodes.find(n => n._id === CDGNodeNames.ENTRY);
+
+    expectHasControlEdge(pdg, entryNode._id, 1);
+    expectHasControlEdge(pdg, entryNode._id, 2);
+    //expectHasControlEdge(pdg, entryNode._id, 3);
+    //expectHasControlEdge(pdg, entryNode._id, 4);
+
+    expectHasDataEdge(pdg, 1, 2);
+    //expectHasDataEdge(pdg, 1, 3);
+    
+    //expect(getDataEdges(pdg)).toBe(2);
+
+    showPDG(pdg, "PDGTestZ");
 });
 */

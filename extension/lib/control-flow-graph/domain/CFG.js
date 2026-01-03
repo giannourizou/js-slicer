@@ -277,11 +277,9 @@ class CFG {
                 let hasInterveningDefinition = remainingNodes.some((rNode) => {
                     let rNodeDeclaredVar = typeof rNode._statement.getDefinedVariable === "function" ? rNode._statement.getDefinedVariable() : undefined;
                     if (rNodeDeclaredVar && rNodeDeclaredVar.includes(variable)) {
-                        if (rNode._statement instanceof VariableDeclaration) {
-                            return this.hasAccessToScope(toNode, rNode._scope);
-                        }else{
-                            return true;
-                        }
+                        if (rNode._statement instanceof VariableDeclaration &&
+                            rNode._nesting > toNode._nesting) return false;
+                        return this.refersToTheSameVariable(fromNode, rNode, variable);
                     }
                     return false;
                 });
@@ -305,21 +303,26 @@ class CFG {
     }
 
 
-    // Check if the closest declaration of variable can reach toNode's scope
-    refersToTheSameVariable(fromNode, toNode, variable){
-        let declarations = this._nodes.filter(n =>
+    // Check if the closest declaration of variable to fromNode 
+    // is the same as the closest declaration of variable to toNode 
+    refersToTheSameVariable(fromNode, toNode, variable) {
+        let fromNodeDeclarations = this._nodes.filter(n =>
             n._statement instanceof VariableDeclaration &&
             n._statement.getDefinedVariable().includes(variable) &&
+            n.nesting <= fromNode.nesting &&
             this.hasAccessToScope(fromNode, n._scope)
         );
-        declarations.sort((a, b) => b._scope - a._scope);
+    
+        let toNodeDeclarations = this._nodes.filter(n =>
+            n._statement instanceof VariableDeclaration &&
+            n._statement.getDefinedVariable().includes(variable) &&
+            n.nesting <= toNode.nesting &&
+            this.hasAccessToScope(toNode, n._scope) 
+        );
 
-        if (declarations[0]) {
-            if (!this.hasAccessToScope(toNode, declarations[0]._scope)) {
-                return false; 
-            }
-        }
-        return true;
+        fromNodeDeclarations.sort((a, b) => b._scope - a._scope);
+        toNodeDeclarations.sort((a, b) => b._scope - a._scope);
+        return fromNodeDeclarations[0] === toNodeDeclarations[0];
     }
 
     // Check if node X's variables are accessible from node Y with scope targetScope
