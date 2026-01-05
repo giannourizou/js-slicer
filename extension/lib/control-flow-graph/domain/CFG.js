@@ -95,9 +95,9 @@ class CFG {
 
     getNodesImmediateDominators() {
         let immediateDomMap = {};
+        let exitNode = this.getExitNode();
         this._nodes.forEach((node) => {
-            let exitNode = this.getExitNode();
-            pathsToExit = this.FDTgetPathsToNode(node._id, exitNode._id);
+            pathsToExit = this.getPathsToNode(node._id, exitNode._id);
 
             // Formal Definition: A node X is post-dominated by a node Y in G if every directed path from X to EXIT (not including X) contains Y. 
             let nodeDominants = [];
@@ -121,7 +121,7 @@ class CFG {
 
             immediateDomMap[node._id] = immediateDomNode ? immediateDomNode._id : 0;
         });
-
+        immediateDomMap[exitNode._id] = 0;
         return immediateDomMap;
     }
 
@@ -148,25 +148,6 @@ class CFG {
     getNodeById(id) {
         return this._nodes.find((node) => node._id === id);
     }
-
-    // Temporary solution
-    // condition visited.size > 0 creates infinite loop for cdg generation
-    FDTgetPathsToNode(startID, exitID, visited = new Set()){
-        if (startID === exitID) return [[exitID]];
-        if (visited.has(startID)) return [];
-
-        let allPathsToNode = [];
-        let startNode = this.getNodeById(startID);
-        visited.add(startID);
-
-        startNode._edges.forEach((e) => {
-            let pathsToExit = this.getPathsToNode(e._targetId, exitID, new Set(visited));
-            pathsToExit.map((path) => {
-                allPathsToNode.push([startID].concat(path))
-            });
-        })
-        return allPathsToNode;
-    }
     
     getPathsToNode(startID, exitID, visited = new Set()){
         if (startID === exitID && visited.size > 0) return [[exitID]];
@@ -188,22 +169,19 @@ class CFG {
     getTopologies() {
         return this._nodes.flatMap((source) => 
             this._nodes
-                .filter((target) => {
-                    if (target._id === source._id) {
-                        let paths = this.getPathsToNode(source._id, target._id);
-                        return paths.some((path) => path.length > 1);   // self loop
-                    }
-                    return true;
-                })
                 .map((target) => {
                     let paths = this.getPathsToNode(source._id, target._id);
+                    if (source._id === target._id) {
+                        paths = paths.filter(path => path.length > 1);
+                    }
                     return {
                         _source: source._id,
                         _target: target._id,
                         _paths: paths   
                     };
                 })
-        );
+                .filter(topology => topology._paths.length > 0)
+            );
     }
 
     getDataDependencyEdgesForNode(fromNode) {
@@ -212,7 +190,8 @@ class CFG {
             .filter((topology) => topology._source === fromNode._id)
             .forEach((topology) => {       
                 let toNode = this.getNodeById(topology._target);
-                if (fromNode._id === toNode._id && fromNode._statement instanceof VariableDeclaration) {
+                if (fromNode._id === toNode._id && 
+                    fromNode._statement instanceof VariableDeclaration) {
                     return;
                 }         
                 this.getVariableDependency(fromNode, this.getNodeById(topology._target), topology._paths).forEach((vd) => {
@@ -222,7 +201,6 @@ class CFG {
                             (edge) => edge._source === fromNode._id && edge._target === topology._target && vd === edge._dependantVariable 
                         )
                     ) {
-                        //console.log(`Creating edge from node ${fromNode._id} to node ${toNode._id}`);
                         ddgEdges.push(new DDGEdge(fromNode._id, topology._target, vd.variable, vd.types));
                     }
                 });

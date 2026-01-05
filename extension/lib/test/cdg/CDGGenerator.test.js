@@ -57,6 +57,31 @@ it("CDG of sequential statements", () => {
 
 });
 
+it("CDG of simple if statement", () => {
+    let code = `
+    function foo(){
+        let x = 1;       // 1
+        if (x<=0){       // 2
+            x++;         // 3
+        }
+        console.log(x);  // 4
+    }
+    `;
+
+    let functionObj = parse(code);
+    let cfg = CFGGenerator.generateCfg2(functionObj);
+    let cdg = CDGGenerator.generateCDG(cfg);
+    let entryNode = cdg._nodes.find(n => n._id === CDGNodeNames.ENTRY);
+
+    expect(cdg._nodes.length).toBe(6); 
+    expectHasEdge(cdg, entryNode._id, 1);
+    expectHasEdge(cdg, entryNode._id, 2);
+    expectHasEdge(cdg, entryNode._id, 4);
+    expectHasEdge(cdg, entryNode._id, 5);
+    expectHasEdge(cdg, 2, 3);   // if body
+
+});
+
 
 it("CDG of if-else statements", () => {
     let code = `
@@ -298,6 +323,7 @@ it("CDG of loop with break", () => {
 
     expectHasEdge(cdg, 2, 3);   // while body
 
+    // Node 3 is a SCR (Strongly Connected Region) 
     expectHasEdge(cdg, 3, 4);   // if body
     expectHasEdge(cdg, 3, 5);   // "else" body
     expectHasEdge(cdg, 3, 6);   // "else" body
@@ -339,6 +365,7 @@ it("CDG with break and nested for loops", () => {
 
     expectHasEdge(cdg, 3, 4); // outer loop body
 
+    // node 4 is a SRC
     expectHasEdge(cdg, 4, 5); // if body
     expectHasEdge(cdg, 4, 6); // for (let j = 0)
     expectHasEdge(cdg, 4, 7); // for (j<i)
@@ -350,6 +377,7 @@ it("CDG with break and nested for loops", () => {
     expectHasEdge(cdg, 9, 10); // if body
     expectHasEdge(cdg, 9, 11); // "else" body
 
+    // node 9 is a SRC
     expectHasEdge(cdg, 11, 12); // if body
     expectHasEdge(cdg, 11, 13); // "else" body
 
@@ -385,6 +413,7 @@ it("CDG with Switch & Break Statement ", () => {
     expectHasEdge(cdg, entryNode._id, 3);
     expectHasEdge(cdg, entryNode._id, 9);
 
+    // switch cases. case 1, case 2 are not different nodes.
     expectHasEdge(cdg, 3, 4); // case 1
     expectHasEdge(cdg, 3, 5); // case 1
     expectHasEdge(cdg, 3, 6); // case 2
@@ -394,7 +423,7 @@ it("CDG with Switch & Break Statement ", () => {
 });
 
 
-// Bug: Entry node doesn't connect ENTRY to (first iteration) of node 2
+// Bug(?): Entry node doesn't connect ENTRY to (first iteration) of node 2
 // Clarification: Fomral Definition of CDG does not differentiate between first iteration and subsequent iterations. Hence, the control dependency of the DO-WHILE loop body on the condition is represented even though in the first iteration, the body executes unconditionally.
 it("Do-while-loop", () => {
     let code = `
@@ -410,5 +439,13 @@ it("Do-while-loop", () => {
     let functionObj = parse(code);
     let cfg = CFGGenerator.generateCfg2(functionObj);
     let cdg = CDGGenerator.generateCDG(cfg);
+    let entryNode = cdg._nodes.find(n => n._id === CDGNodeNames.ENTRY);
+
+    expect(cdg._nodes.length).toBe(6);
+
+    expectHasEdge(cdg, entryNode._id, 1);
+    expectHasEdge(cdg, entryNode._id, 3);
+    expectHasEdge(cdg, entryNode._id, 4);
+    expectHasEdge(cdg, 3, 2); // while body
 
 });

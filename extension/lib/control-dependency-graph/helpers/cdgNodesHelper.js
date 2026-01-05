@@ -4,11 +4,10 @@ const CDGNodeNames = require("../constants/CDGNodeNames");
 // Checks if node Y post dominates node X by traversing up the FDT 
 const postDominates = (yID, xID, immediateDomMap) => {
     if (xID === yID) return true; 
-    
-    let cID = xID;
-    while (cID !== 0) { 
-        cID = immediateDomMap[cID];  
-        if (cID === yID) return true;   
+    let currentID = xID;
+    while (currentID !==0) { 
+        currentID = immediateDomMap[currentID];  
+        if (currentID === yID) return true;   
     }
     return false;
 };
@@ -60,7 +59,6 @@ const findCDNodes = (cfg, xID, yID, immediateDomMap, condition) => {
 
 const getCDGNodeEdges = (cfg, nodeX, immediateDomMap) => {
     let edges = [];
-
     nodeX._edges.forEach(edge => {
         let yID = edge._targetId;
         if (!postDominates(yID, nodeX._id, immediateDomMap)) {
