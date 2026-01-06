@@ -1,5 +1,6 @@
 const CFGGenerator = require("../../control-flow-graph/CFGGenerator");
 const FDTGenerator = require("../../forward-dominance-tree/FDTGenerator");
+const FDTVisualizer = require("../../forward-dominance-tree/FDTVisualizer");
 const Parser = require("../../code-parser-module/Parser");
 
 function parse(str) {
@@ -8,6 +9,11 @@ function parse(str) {
 
 function expectHasEdge(fdt, source, target) {
     expect(fdt.hasEdge(source, target)).toBe(true);
+}
+
+function showFDT(fdt, filename) {
+    let visualizer = new FDTVisualizer(fdt, filename);
+    visualizer.exportToDot();
 }
 
 it("throws error when CFG is missing", () => {
@@ -46,6 +52,7 @@ it("FDT of sequential statements", () => {
     expectHasEdge(fdt, 3, 2);   
     expectHasEdge(fdt, 2, 1);
 
+    showFDT(fdt, "FDT1")
 });
 
 
@@ -72,6 +79,7 @@ it("FDT of if/else statement", () => {
     expectHasEdge(fdt, 5, 3);   // return <- y = 1 
     expectHasEdge(fdt, 2, 1);   // if -> let y = 0
 
+    showFDT(fdt, "FDT2")
 });
 
 
@@ -103,7 +111,8 @@ it("FDT of nested ifs", () => {
     expectHasEdge(fdt, 7, 5);   // return <- y = 2
     expectHasEdge(fdt, 7, 6);   // return <- y = -1
     expectHasEdge(fdt, 2, 1);   // if (x>0) <- y = 0
-     
+
+    showFDT(fdt, "FDT3")
 });
 
 it("FDT of while loop", () => {
@@ -128,6 +137,7 @@ it("FDT of while loop", () => {
     expectHasEdge(fdt, 2, 4); // while x>0 <- x--
     expectHasEdge(fdt, 4, 3); // x-- <- y++
 
+    showFDT(fdt, "FDT4")
 });
 
 it("FDT of nested while statements", () => {
@@ -163,6 +173,7 @@ it("FDT of nested while statements", () => {
     expectHasEdge(fdt, 3, 6);   // while (a < ar.length) <- while (b >= 0)
     expectHasEdge(fdt, 2, 1);   // let a = 1 <- let ar = [1,2,3]
 
+    showFDT(fdt, "FDT5")
 });
 
 it("FDT of for loop", () => {
@@ -193,6 +204,7 @@ it("FDT of for loop", () => {
     expectHasEdge(fdt, 3, 2);   // let i = 0 <- let a = 1 
     expectHasEdge(fdt, 2, 1);   // a=1 <- ar = [1,2,3]
 
+    showFDT(fdt, "FDT6")
 });
 
 
@@ -237,6 +249,7 @@ it("FDT with break and nested for loops", () => {
     expectHasEdge(fdt, 3, 14);  // i < ar.length <- i++ 
     expectHasEdge(fdt, 2, 1);   // let i = 0 <- let ar = [1, 2, 3]
 
+    showFDT(fdt, "FDT7")
 });
 
 it("FDT of while loop with break", () => {
@@ -266,6 +279,7 @@ it("FDT of while loop with break", () => {
     expectHasEdge(fdt, 2, 6); // while(x>0) <- x--
     expectHasEdge(fdt, 2, 1); // x>0 <- y=0
 
+    showFDT(fdt, "FDT8")
 });
 
 
@@ -302,6 +316,7 @@ it("FDT of multiple ifs & returns", () => {
     expectHasEdge(fdt, 9, 2); // exit <- if (d>10)
     expectHasEdge(fdt, 2, 1); // if (d>10) <- let d = a+b+c
 
+    showFDT(fdt, "FDT9")
 });
 
 
@@ -340,6 +355,7 @@ it("FDT of complex if body", () => {
     expectHasEdge(fdt, 3, 12);  // i<3 <- i++
     expectHasEdge(fdt, 2, 1);   // let i=0 <- let sum=0
 
+    showFDT(fdt, "FDT10")
 });
 
 
@@ -366,4 +382,6 @@ it("FDT of complex if body 2", () => {
     expectHasEdge(fdt, 4, 3); // i<5 <- let i=0
     expectHasEdge(fdt, 4, 6); // i<5 <- i++
     expectHasEdge(fdt, 2, 1); // if x>0 <- let x=0 
+
+    showFDT(fdt, "FDT11")
 });
