@@ -380,6 +380,7 @@ it("PDG11", () => {
     expectHasControlEdge(pdg, entryNode._id, 2);
     expectHasControlEdge(pdg, entryNode._id, 4);
     expectHasControlEdge(pdg, 2, 3);
+    expectHasControlEdge(pdg, 2, 2); // src
 
     expectHasDataEdge(pdg, 1, 2);
     expectHasDataEdge(pdg, 1, 3);
@@ -411,11 +412,11 @@ it("PDG12", () => {
     expectHasControlEdge(pdg, entryNode._id, 1);
     expectHasControlEdge(pdg, entryNode._id, 2);
     expectHasControlEdge(pdg, entryNode._id, 6);
-
     expectHasControlEdge(pdg, entryNode._id, 2);
     expectHasControlEdge(pdg, entryNode._id, 3);
     expectHasControlEdge(pdg, 3, 4);
     expectHasControlEdge(pdg, 3, 5);
+    expectHasControlEdge(pdg, 3, 3); // src
 
     expectHasDataEdge(pdg, 1, 4);
     expectHasDataEdge(pdg, 2, 3);
@@ -568,8 +569,10 @@ it("PDG15", () => {
     expectHasControlEdge(pdg, entryNode._id, 2);
     expectHasControlEdge(pdg, entryNode._id, 8);
     expectHasControlEdge(pdg, 2, 3);
+    expectHasControlEdge(pdg, 2, 2); // src
     expectHasControlEdge(pdg, 2, 4);
     expectHasControlEdge(pdg, 2, 7);
+    expectHasControlEdge(pdg, 4, 4); // src
     expectHasControlEdge(pdg, 4, 5);
     expectHasControlEdge(pdg, 4, 6);
 
@@ -621,6 +624,7 @@ it("PDG16", () => {
     expectHasControlEdge(pdg, entryNode._id, 3);
     expectHasControlEdge(pdg, entryNode._id, 6);
     expectHasControlEdge(pdg, entryNode._id, 7);
+    expectHasControlEdge(pdg, 3, 3); // src
     expectHasControlEdge(pdg, 3, 4);
     expectHasControlEdge(pdg, 3, 5);
     
@@ -706,6 +710,7 @@ it("PDG18", () => {
     expectHasControlEdge(pdg, entryNode._id, 7);
     expectHasControlEdge(pdg, entryNode._id, 8);
     expectHasControlEdge(pdg, 2, 3);
+    expectHasControlEdge(pdg, 2, 2); // src
     expectHasControlEdge(pdg, 2, 6);
     expectHasControlEdge(pdg, 3, 4);
     expectHasControlEdge(pdg, 3, 5);
@@ -1021,9 +1026,11 @@ it("PDG25", () =>{
     expectHasControlEdge(pdg, entryNode._id, 2);
     expectHasControlEdge(pdg, entryNode._id, 3);
     expectHasControlEdge(pdg, entryNode._id, 9);
+    expectHasControlEdge(pdg, 3, 3); // src
     expectHasControlEdge(pdg, 3, 4);
     expectHasControlEdge(pdg, 3, 5);
     expectHasControlEdge(pdg, 3, 8);
+    expectHasControlEdge(pdg, 5, 5); // src
     expectHasControlEdge(pdg, 5, 6);
     expectHasControlEdge(pdg, 5, 7);
     
@@ -1082,6 +1089,7 @@ it("PDG26", () =>{
     expectHasControlEdge(pdg, entryNode._id, 2);
     expectHasControlEdge(pdg, entryNode._id, 7);
     expectHasControlEdge(pdg, entryNode._id, 8);
+    expectHasControlEdge(pdg, 2, 2); // src
     expectHasControlEdge(pdg, 2, 3);
     expectHasControlEdge(pdg, 2, 4);
     expectHasControlEdge(pdg, 2, 5);
@@ -1134,6 +1142,7 @@ it("PDGTest27", () => {
     expectHasControlEdge(pdg, entryNode._id, 4);
     expectHasControlEdge(pdg, entryNode._id, 5);
     expectHasControlEdge(pdg, 3, 2);
+    expectHasControlEdge(pdg, 3, 3); // src
 
     expectHasDataEdge(pdg, 1, 2);
     expectHasDataEdge(pdg, 2, 2);
@@ -1176,12 +1185,14 @@ it("PDGTest28", () =>{
     expectHasControlEdge(pdg, entryNode._id, 3);
     expectHasControlEdge(pdg, entryNode._id, 12);
     expectHasControlEdge(pdg, entryNode._id, 13);
+    expectHasControlEdge(pdg, 3, 3); // src
     expectHasControlEdge(pdg, 3, 4);
     expectHasControlEdge(pdg, 3, 5);
     expectHasControlEdge(pdg, 3, 11);
     expectHasControlEdge(pdg, 5, 6);
     expectHasControlEdge(pdg, 5, 7);
     expectHasControlEdge(pdg, 5, 8);
+    expectHasControlEdge(pdg, 8, 8); // src
     expectHasControlEdge(pdg, 8, 9);
     expectHasControlEdge(pdg, 8, 10);
 
@@ -1578,7 +1589,9 @@ it("PDGTest36", () => {
     expectHasControlEdge(pdg, entryNode._id, 2);
     expectHasControlEdge(pdg, entryNode._id, 4);
     expectHasControlEdge(pdg, entryNode._id, 6);
+    expectHasControlEdge(pdg, 2, 2); // src
     expectHasControlEdge(pdg, 2, 3);
+    expectHasControlEdge(pdg, 4, 4); // src
     expectHasControlEdge(pdg, 4, 5);
 
     expectHasDataEdge(pdg, 1, 5);

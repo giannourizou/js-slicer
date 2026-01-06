@@ -2,6 +2,7 @@ const CDGNodeNames = require("../../control-dependency-graph/constants/CDGNodeNa
 const CDGGenerator = require("../../control-dependency-graph/CDGGenerator");
 const FDTGenerator = require("../../forward-dominance-tree/FDTGenerator");
 const CFGGenerator = require("../../control-flow-graph/CFGGenerator");
+const CDGVisualizer = require("../../control-dependency-graph/CDGVisualizer")
 const Parser = require("../../code-parser-module/Parser");
 
 function parse(str) {
@@ -12,7 +13,12 @@ function expectHasEdge(cdg, source, target) {
     expect(cdg.hasEdge(source, target)).toBe(true);
 }
 
-function printCDG(cfg, cdg){
+function showCDG(cdg, filename) {
+    let visualizer = new CDGVisualizer(cdg, filename);
+    visualizer.exportToDot();
+}
+
+function printCDG(cfg, cdg){ // Used for debugging
     console.log("Printed CDG");
     cdg._nodes.forEach((node) => {
         const cfgNode = cfg._nodes.find(n => n._id === node.id);
@@ -27,6 +33,7 @@ it("throws error when CFG is missing", () => {
         CDGGenerator.generateCDG(null);
     }).toThrow("Missing required param.");
 });
+
 
 it("CDG of sequential statements", () => {
     let code = `
@@ -55,6 +62,7 @@ it("CDG of sequential statements", () => {
     expectHasEdge(cdg, entryNode._id, 6);
     expectHasEdge(cdg, entryNode._id, 7);   
 
+    showCDG(cdg, "CDG1");
 });
 
 it("CDG of simple if statement", () => {
@@ -80,6 +88,7 @@ it("CDG of simple if statement", () => {
     expectHasEdge(cdg, entryNode._id, 5);
     expectHasEdge(cdg, 2, 3);   // if body
 
+    showCDG(cdg, "CDG2");
 });
 
 
@@ -113,6 +122,7 @@ it("CDG of if-else statements", () => {
     expectHasEdge(cdg, entryNode._id, 7);
     expectHasEdge(cdg, entryNode._id, 8);
 
+    showCDG(cdg, "CDG3");
 });
 
 
@@ -148,6 +158,7 @@ it("CDG of nested ifs", () => {
     expectHasEdge(cdg, 3, 4);   // inner if body
     expectHasEdge(cdg, 3, 5);   // inner else body
 
+    showCDG(cdg, "CDG4");
 });
 
 
@@ -175,7 +186,9 @@ it("CDG of while loop", () => {
     expectHasEdge(cdg, entryNode._id, 6);
     expectHasEdge(cdg, 2, 3);   // loop body
     expectHasEdge(cdg, 2, 4);   // loop body
+    expectHasEdge(cdg, 2, 2);   // SRC
 
+    showCDG(cdg, "CDG5");
 });
 
 it("CDG of nested while statements", () => {
@@ -202,6 +215,7 @@ it("CDG of nested while statements", () => {
     let entryNode = cdg._nodes.find(n => n._id === CDGNodeNames.ENTRY);
 
     expect(cdg._nodes.length).toBe(12)
+    
     expectHasEdge(cdg, entryNode._id, 1);
     expectHasEdge(cdg, entryNode._id, 2);
     expectHasEdge(cdg, entryNode._id, 3);   // outer while
@@ -217,7 +231,12 @@ it("CDG of nested while statements", () => {
 
     expectHasEdge(cdg, 8, 9);   // if body
 
+    expectHasEdge(cdg, 3, 3);   // SRC
+    expectHasEdge(cdg, 6, 6);   // SRC
+
+    showCDG(cdg, "CDG6");
 });
+
 
 it("CDG of multiple ifs & returns", () => {
     let code = `
@@ -258,6 +277,7 @@ it("CDG of multiple ifs & returns", () => {
     expectHasEdge(cdg, 6, 7);   // if body
     expectHasEdge(cdg, 6, 8);   // else body
 
+    showCDG(cdg, "CDG7");
 });
 
 it("CDG of for loop", () => {
@@ -287,12 +307,14 @@ it("CDG of for loop", () => {
     expectHasEdge(cdg, entryNode._id, 9);
     expectHasEdge(cdg, entryNode._id, 10);
 
+    expectHasEdge(cdg, 4, 4); // SRC
     expectHasEdge(cdg, 4, 5); // for loop body
     expectHasEdge(cdg, 4, 6); // for loop body
     expectHasEdge(cdg, 4, 8); // i++
     
     expectHasEdge(cdg, 6, 7); // if body
 
+    showCDG(cdg, "CDG8");
 });
 
 it("CDG of loop with break", () => {
@@ -322,12 +344,13 @@ it("CDG of loop with break", () => {
     expectHasEdge(cdg, entryNode._id, 8);
 
     expectHasEdge(cdg, 2, 3);   // while body
-
-    // Node 3 is a SCR (Strongly Connected Region) 
     expectHasEdge(cdg, 3, 4);   // if body
     expectHasEdge(cdg, 3, 5);   // "else" body
     expectHasEdge(cdg, 3, 6);   // "else" body
 
+    // Node 3 is NOT a SRC because of the break statement in node 4.
+
+    showCDG(cdg, "CDG9");
 });
 
 it("CDG with break and nested for loops", () => {
@@ -365,7 +388,6 @@ it("CDG with break and nested for loops", () => {
 
     expectHasEdge(cdg, 3, 4); // outer loop body
 
-    // node 4 is a SRC
     expectHasEdge(cdg, 4, 5); // if body
     expectHasEdge(cdg, 4, 6); // for (let j = 0)
     expectHasEdge(cdg, 4, 7); // for (j<i)
@@ -377,10 +399,10 @@ it("CDG with break and nested for loops", () => {
     expectHasEdge(cdg, 9, 10); // if body
     expectHasEdge(cdg, 9, 11); // "else" body
 
-    // node 9 is a SRC
     expectHasEdge(cdg, 11, 12); // if body
     expectHasEdge(cdg, 11, 13); // "else" body
 
+    showCDG(cdg, "CDG10");
 });
 
 it("CDG with Switch & Break Statement ", () => {
@@ -420,6 +442,7 @@ it("CDG with Switch & Break Statement ", () => {
     expectHasEdge(cdg, 3, 7); // case 2
     expectHasEdge(cdg, 3, 8); // default case
 
+    showCDG(cdg, "CDG11");
 });
 
 
@@ -447,5 +470,8 @@ it("Do-while-loop", () => {
     expectHasEdge(cdg, entryNode._id, 3);
     expectHasEdge(cdg, entryNode._id, 4);
     expectHasEdge(cdg, 3, 2); // while body
+    expectHasEdge(cdg, 3,3); // src
 
+    showCDG(cdg, "CDG12");
 });
+

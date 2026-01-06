@@ -3,7 +3,6 @@ const CDGNodeNames = require("../constants/CDGNodeNames");
 
 // Checks if node Y post dominates node X by traversing up the FDT 
 const postDominates = (yID, xID, immediateDomMap) => {
-    if (xID === yID) return true; 
     let currentID = xID;
     while (currentID !==0) { 
         currentID = immediateDomMap[currentID];  
@@ -73,6 +72,14 @@ const getCDGNodeEdges = (cfg, nodeX, immediateDomMap) => {
                     edges.push(new CDGEdge(nodeX._id, dep.nodeId, dep.condition));
                 }
             });
+            
+            let isStronglyConnectedRegion = nodeX._edges.some(edge => {
+                return postDominates(nodeX._id, edge._targetId, immediateDomMap)
+            });
+            if (isStronglyConnectedRegion && 
+                !edges.some(e => e._source === nodeX._id && e._target === nodeX._id)) {
+                edges.push(new CDGEdge(nodeX._id, nodeX._id, null));
+            }
         }
     });
     return edges;
@@ -84,8 +91,12 @@ const getCDGEntryNodeEdges = (cfg, cdgNodes) => {
     let CDNodes = new Set();
     
     cdgNodes.forEach(node => {
-        if (node._id !== CDGNodeNames.ENTRY){
-            node._edges.forEach(edge => CDNodes.add(edge._target));
+        if (node._id !== CDGNodeNames.ENTRY) {
+            node._edges.forEach(edge => {
+                if (edge._source !== edge._target) { 
+                    CDNodes.add(edge._target)
+                }
+            })
         }
     });
 
