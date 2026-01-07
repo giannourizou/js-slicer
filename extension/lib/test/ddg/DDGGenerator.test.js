@@ -1,5 +1,6 @@
 const CFGGenerator = require("../../control-flow-graph/CFGGenerator");
 const DDGGenerator = require("../../data-dependence-graph/DDGGenerator");
+const DDGVisualizer = require("../../data-dependence-graph/DDGVisualizer");
 const Parser = require("../../code-parser-module/Parser");
 
 function parse(str) {
@@ -8,6 +9,11 @@ function parse(str) {
 
 function expectHasEdge(ddg, source, target) {
     expect(ddg.hasEdge(source, target)).toBe(true);
+}
+
+function showDDG(ddg, filename) {
+    let visualizer = new DDGVisualizer(ddg, filename);
+    visualizer.exportToDot();
 }
 
 function printDDG(cfg,ddg){
@@ -46,6 +52,8 @@ it("DDG1 - Simple Def-Use", () => {
     expectHasEdge(ddg,1,2); // def-use
     expectHasEdge(ddg,2,3); // def-use
     expectHasEdge(ddg,2,4); // def-use
+
+    showDDG(ddg, "DDG1");
 });
 
 
@@ -68,7 +76,8 @@ it("DDG2 - Def-Use & Def-Def Intervening Definition", () =>{
     expectHasEdge(ddg, 2, 3);   // def-def (b)
     expectHasEdge(ddg, 3, 4);   // def-use (b)
     expect(ddg.hasEdge(2, 4)).toBe(false);  // no def-use due to intervening definition
-    
+
+    showDDG(ddg, "DDG2");
 });
 
 
@@ -93,6 +102,8 @@ it("DDG3 - Use-Def & Intervening Definition", () => {
     expectHasEdge(ddg,2,3); // use-def (a)
     expectHasEdge(ddg,3,4); // def-use (a)
     expect(ddg.hasEdge(1,4)).toBe(false); // no use-def due to intervening definition
+
+    showDDG(ddg, "DDG3");
 });
 
 
@@ -119,6 +130,7 @@ it("DDG4 - Assignment Statement with 2+ variables", () => {
     expectHasEdge(ddg,2,4); // def-use & def-def (b)
     expectHasEdge(ddg,3,4); // def-use(c) & use-def(b)
 
+    showDDG(ddg, "DDG4");
 });
 
 
@@ -153,6 +165,7 @@ it("DDG5 - If/Else Statement", () =>{
     expectHasEdge(ddg,4,6); // def-use (b)
     expectHasEdge(ddg,5,6); // def-use (b)
 
+    showDDG(ddg, "DDG5");
 });
 
 
@@ -186,6 +199,7 @@ it("DDG6 - For Loop Statement", () =>{
     expectHasEdge(ddg,5,4); // def-use (i)
     expectHasEdge(ddg,5,5); // def-def & def-use & use-def (i)
 
+    showDDG(ddg, "DDG6");
 });
 
 
@@ -221,6 +235,7 @@ it("DDG7 - Switch & Break Statement ", () => {
     expectHasEdge(ddg,2,4); // def-def (b)
     expectHasEdge(ddg,2,8); // def-use (b)
     
+    showDDG(ddg, "DDG7");
 })
 
 
@@ -260,6 +275,7 @@ it("DDG8 - While Loop & Continue Statement", () => {
     expectHasEdge(ddg,7,7); // def-use & use-def & def-def (sum)
     expectHasEdge(ddg,7,8); // def-use (sum)
 
+    showDDG(ddg, "DDG8");
 })
 
 
@@ -283,6 +299,7 @@ it("DDG9 - Arrays - Simple Access", () => {
     expectHasEdge(ddg,2,4); // def-use (x)
     expectHasEdge(ddg,3,4); // def-use (y)
 
+    showDDG(ddg, "DDG9");
 })
 
 
@@ -313,6 +330,7 @@ it("DDG10a - Arrays - Update Element", () =>{
     expectHasEdge(ddg, 2, 3); // def-use (arr)
     expect(ddg.hasEdge(1,3)).toBe(false); // should not be a def-use (arr) due to intervening definition
 
+    showDDG(ddg, "DDG10a");
 });
 
 
@@ -357,6 +375,7 @@ it("DDG10b - Arrays - Update Element", () =>{
     expectHasEdge(ddg, 6, 5); // def-use (i)
     expectHasEdge(ddg, 6, 6); // def-use (i) 
 
+    showDDG(ddg, "DDG10b");
 });
 
 
@@ -380,6 +399,8 @@ it("DDG11 - Arrays - Mutating Methods", () => {
     expectHasEdge(ddg,2,3); // def-def & def-use & use-def
     expectHasEdge(ddg,3,4); // def-def & def-use & use-def
     expectHasEdge(ddg,4,5); // def-def & def-use & use-def
+
+    showDDG(ddg, "DDG11");
 });
 
 
@@ -404,6 +425,8 @@ it("DDG12 - Arrays - Non-mutating methods", () => {
     expectHasEdge(ddg,2,4) // def-def & def-use (x)
     expectHasEdge(ddg,4,5) // def-use (x)
     expect(ddg.hasEdge(2,5)).toBe(false) // intervening definition of x
+
+    showDDG(ddg, "DDG12");
 })
 
 
@@ -424,6 +447,7 @@ it("DDG13 - Return statement", () => {
     expectHasEdge(ddg,1,3); // def-use (x)
     expectHasEdge(ddg,2,3); // def-use (y)
 
+    showDDG(ddg, "DDG13");
 })
 
 
@@ -449,6 +473,8 @@ it("DDG14 - Arrow Functions", () =>{
     expectHasEdge(ddg,2,5); // def-use (doubled)
     expectHasEdge(ddg,3,5); // use-def (doubled)
     expectHasEdge(ddg,4,5); // def-use (two)
+
+    showDDG(ddg, "DDG14");
 });
 
 
@@ -471,6 +497,7 @@ it("DDG15 - Logical Operators", () =>{
     expectHasEdge(ddg,2,4); // def-use (y)
     expectHasEdge(ddg,3,4); // def-use (z)
 
+    showDDG(ddg, "DDG15");
 });
 
 
@@ -494,6 +521,7 @@ it("DDG16 - Ternary Operator", () =>{
     expectHasEdge(ddg,2,3); // def-use (y)
     expectHasEdge(ddg,3,4); // def-use (max) & use-def (x)
 
+    showDDG(ddg, "DDG16");
 });
 
 
@@ -517,6 +545,7 @@ it("DDG17 - Unary Operators", () =>{
     expectHasEdge(ddg,1,3); // def-use(x)
     expectHasEdge(ddg,1,4); // def-use(x)
 
+    showDDG(ddg, "DDG17");
 });
 
 
@@ -551,8 +580,8 @@ it("DDG18 - Compound Operators", () =>{
     expectHasEdge(ddg,5,5); // def-def & use-def & def-use (i)
     expectHasEdge(ddg,6,7); // def-use (sum)
     
+    showDDG(ddg, "DDG18");
 });
-
 
 
 it("DDG19 - Nested Loops", () =>{
@@ -602,6 +631,7 @@ it("DDG19 - Nested Loops", () =>{
     expectHasEdge(ddg,8,6); // def-use(i)
     expectHasEdge(ddg,8,8); // def-def & def-use & use-def(i)
 
+    showDDG(ddg, "DDG19");
 });
 
 
@@ -620,6 +650,7 @@ it("DDG20 - Throw Statement", () =>{
 
     expectHasEdge(ddg,1,2); // def-use (error)
 
+    showDDG(ddg, "DDG20");
 });
 
 
@@ -651,6 +682,7 @@ it("DDG21a - Object Property Use", () =>{
     expectHasEdge(ddg,2,3); // def-use(y)
     expectHasEdge(ddg,3,4); // def-use (obj)
 
+    showDDG(ddg, "DDG21a");
 });
 
 
@@ -677,6 +709,7 @@ it("DDG21b - Object Property Redefine & Use", () =>{
     expectHasEdge(ddg,4,5); // def-def & def-use & use-def (obj)
     expectHasEdge(ddg,5,6); // def-use (obj)
 
+    showDDG(ddg, "DDG21b");
 });
 
 
@@ -695,6 +728,7 @@ it("DDG22 - New Expression", () =>{
 
     expectHasEdge(ddg,1,2); // def-use(size)
 
+    showDDG(ddg, "DDG22");
 });
 
 
@@ -738,10 +772,11 @@ it("DDG23 - Nested Loops (While & For Loop)", () => {
     expectHasEdge(ddg, 7, 5); // def-use(x)
     expectHasEdge(ddg, 7, 7); // def-def & def-use & use-def (x)
 
+    showDDG(ddg, "DDG23");
 });
 
 
-it("DDG23 - Different scopes - Same name variables (Shadowing)", () =>{
+it("DDG24 - Different scopes - Same name variables (Shadowing)", () =>{
     let code = `
     function foo() {
         let x = 5;      // 1
@@ -767,10 +802,11 @@ it("DDG23 - Different scopes - Same name variables (Shadowing)", () =>{
     expectHasEdge(ddg, 1, 8); // def-use(x)
     expectHasEdge(ddg, 3, 4); // def-use(different scope x)
 
+    showDDG(ddg, "DDG24");
 });
 
 
-it("DDG24 - Shadowing - Double nesting", () => {
+it("DDG25 - Shadowing - Double nesting", () => {
     let code = `
         function foo() {
             let x = 1;                  // 1
@@ -795,10 +831,11 @@ it("DDG24 - Shadowing - Double nesting", () => {
     expectHasEdge(ddg, 3, 7); // def-use(middle x)
     expectHasEdge(ddg, 5, 6); // def-use(inner x)
 
+    showDDG(ddg, "DDG25");
 });
 
 
-it("DDG25 - Shadowing - Loop", () => {
+it("DDG26 - Shadowing - Loop", () => {
     let code = `
     function foo() {
         let sum = 0;                    // 1
@@ -839,10 +876,11 @@ it("DDG25 - Shadowing - Loop", () => {
     expectHasEdge(ddg, 10, 8); // def-use(i)
     expectHasEdge(ddg, 10, 10); // def-use & def-def & use_def(i)
 
+    showDDG(ddg, "DDG26");
 });
 
 
-it("DDG25 - Shadowing - Double loop & Nesting", () => {
+it("DDG27 - Shadowing - Double loop & Nesting", () => {
     let code = `
     function foo() {
         let sum = 0;                        // 1
@@ -889,10 +927,11 @@ it("DDG25 - Shadowing - Double loop & Nesting", () => {
     expectHasEdge(ddg, 11, 5); // def-use (i)
     expectHasEdge(ddg, 11, 11); // def-def & def-use (i)
 
+    showDDG(ddg, "DDG27");
 });
 
 
-it("DDG26 - Reassignment shadowing", () => {
+it("DDG28 - Reassignment shadowing", () => {
     let code = `
     function foo() {
         let x = 10; // 1
@@ -931,10 +970,11 @@ it("DDG26 - Reassignment shadowing", () => {
 
     expect(ddg.hasEdge(6, 10)).toBe(false); // same nesting case
 
+    showDDG(ddg, "DDG28");
 });
 
 
-it("DDG27 - Recursive function", () => {
+it("DDG29 - Recursive function", () => {
     let code = `
     function foo(n) {
         let a = 1   // 1
@@ -951,7 +991,7 @@ it("DDG27 - Recursive function", () => {
 
     expectHasEdge(ddg, 1, 4);  // def-use (a)
 
-    
+    showDDG(ddg, "DDG29");
 });
 
 
