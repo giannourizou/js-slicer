@@ -261,10 +261,19 @@ class CFG {
                     }
                     return false;
                 });
+
+                let hasInterveningUse = remainingNodes.some((rNode) => { 
+                    let rNodeUsedVars = typeof rNode._statement.getUsedVariableNames === "function" ? rNode._statement.getUsedVariableNames() : [];
+                    if (rNodeUsedVars.includes(variable)) {
+                        return this.refersToTheSameVariable(fromNode, rNode, variable);
+                    }
+                    return false;
+                });
+
                 if (hasInterveningDefinition) return false;
 
                 let def_use = sourceNodeDeclaredVar && sourceNodeDeclaredVar.includes(variable) && destNodeUsedVars.includes(variable);
-                let def_def = sourceNodeDeclaredVar && sourceNodeDeclaredVar.includes(variable) && destNodeDeclaredVar && destNodeDeclaredVar.includes(variable);
+                let def_def = sourceNodeDeclaredVar && sourceNodeDeclaredVar.includes(variable) && destNodeDeclaredVar && destNodeDeclaredVar.includes(variable) && !(destNodeUsedVars.includes(variable)) && !hasInterveningUse;
                 let use_def = sourceNodeUsedVars.includes(variable) && destNodeDeclaredVar && destNodeDeclaredVar.includes(variable);
 
                 types = [];
