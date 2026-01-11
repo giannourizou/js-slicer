@@ -274,7 +274,7 @@ class CFG {
 
                 let def_use = sourceNodeDeclaredVar && sourceNodeDeclaredVar.includes(variable) && destNodeUsedVars.includes(variable);
                 let def_def = sourceNodeDeclaredVar && sourceNodeDeclaredVar.includes(variable) && destNodeDeclaredVar && destNodeDeclaredVar.includes(variable) && !(destNodeUsedVars.includes(variable)) && !hasInterveningUse;
-                let use_def = sourceNodeUsedVars.includes(variable) && destNodeDeclaredVar && destNodeDeclaredVar.includes(variable);
+                let use_def = sourceNodeUsedVars.includes(variable) && destNodeDeclaredVar && destNodeDeclaredVar.includes(variable) && !(sourceNodeDeclaredVar.includes(variable));
 
                 types = [];
                 if (def_use) types.push("def-use");
