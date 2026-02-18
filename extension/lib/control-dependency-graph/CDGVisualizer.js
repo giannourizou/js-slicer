@@ -39,9 +39,7 @@ class CDGVisualizer {
             if (node._id === CDGNodeNames.ENTRY) {
                 digraph += `\t"${node._id}" [label="ENTRY", shape=oval];\n`;
             } else if (node._statement) {
-                label = node._statement.asText();
-                //digraph += `\t"${node._id}" [label="${label}"];\n`;
-                digraph += `\t"${node._id}" [label="${node._id}"];\n`; // Show just the node id
+                digraph += `\t"${node._id}" [label="${node._id}: ${node._statement.asText()}"];\n`;
             } else {
                 digraph += `\t"${node._id}" [label="EXIT", shape=oval];\n`;
             }
@@ -52,7 +50,7 @@ class CDGVisualizer {
             if (node._edges) {
                 for (let edge of node._edges) {
                     digraph += `\t"${edge._source}" -> "${edge._target}" `;
-                    digraph += `[style=solid, color="black", arrowsize=0.8];\n`;
+                    digraph += `[style=solid, color="black", arrowsize=0.8, label="  ${edge._condition}"];\n`;
                 }
             }
         }

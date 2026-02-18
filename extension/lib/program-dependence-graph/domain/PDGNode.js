@@ -1,8 +1,7 @@
 class PDGNode {
 
-    constructor(id, executionCondition, statement, edges, controlEdges, dataEdges) {
+    constructor(id, statement, edges, controlEdges, dataEdges) {
         this._id = id;
-        this._executionCondition = executionCondition
         this._statement = statement;
         this._edges = edges;
         this._controlEdges = controlEdges;
@@ -16,14 +15,6 @@ class PDGNode {
 
     set id(value) {
         this._id = value;
-    }
-
-    get executionCondition() {
-        return this._executionCondition;
-    }
-
-    set executionCondition(value) {
-        this._executionCondition = value;
     }
 
     get statement() {

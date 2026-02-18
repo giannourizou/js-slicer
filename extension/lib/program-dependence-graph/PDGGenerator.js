@@ -13,14 +13,14 @@ class PDGGenerator{
 
         let PDGnodes =  cdg._nodes.map(node =>{
             if(node._id === CDGNodeNames.ENTRY){
-                return new PDGNode (node._id, null, node._statement, node._edges, node._edges, []);
+                return new PDGNode (node._id, node._statement, node._edges, node._edges, []);
             }
             let ddgNode = ddg.getNodeById(node._id);
             let dataEdges = ddgNode?._edges;
             let controlEdges = node._edges;
             let allEdges =  controlEdges.concat(dataEdges);
             
-            let pdgNode = new PDGNode (node._id, null, node._statement, allEdges, controlEdges, dataEdges);
+            let pdgNode = new PDGNode (node._id, node._statement, allEdges, controlEdges, dataEdges);
             return pdgNode;
         })
         
