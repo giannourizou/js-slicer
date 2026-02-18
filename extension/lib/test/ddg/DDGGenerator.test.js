@@ -1002,23 +1002,18 @@ it("DDG29 - Recursive function", () => {
 });
 
 
-it("Debugging", () => {
+// CFG does not unroll the forEach loop
+// So no def-use edges can be created.
+// Same applies to other higher-order functions (map, filter, reduce, etc.)
+it("DDG30 - ForEach Statement", () => {
     let code = `
-    function foo(x, a, b) {
-        x = 0;  // 1
-        if (a === 5) { // 2
-            console.log(a); // 3
-            if (a === 2) { // 4
-                x = 5; // 5
-            }
-        }
-        if (b === 6) { // 6
-            console.log(b); // 7
-            if (b === 3) { // 8
-                let x = 10; // 9
-                x = x + 20; // 10
-            }
-        }
+    function foo(n) {
+        let arr = [1, 2, 3];           // 1
+        let sum = 0;                   // 2
+        arr.forEach(function(item) {   // 3 
+            sum = sum + item;          // 4 
+        });
+        return sum;                    // 5
     }
     `;
 
@@ -1026,9 +1021,37 @@ it("Debugging", () => {
     let cfg = CFGGenerator.generateCfg2(functionObj);
     let ddg = DDGGenerator.generateDDG(cfg);
 
-    //printDDG(cfg,ddg);
-    
+    /*
+    console.log("Printed CFG");
+    cfg._nodes.forEach((node) => {
+        const stmt = node?._statement;
+        console.log( `Node ${node.id} → children: [${node._edges.map(e => e.target).join(", ")}] Statement: ${typeof stmt === "string" ? stmt : JSON.stringify(stmt)}`);
+    });
+    */
+
+    showDDG(ddg, "DDG30");
 });
+
+it("THESIS EXAMPLE", () => {
+    let code = `
+    function thesis_example(x){
+        let pos = x;        // 1
+        let found = false; // 2
+        while (!found && pos >= 0){ // 3,4
+            if (pos === 1){    // 5
+                found = true;  // 6
+            }
+            pos--;          // 7
+        }
+        return found; // 8
+    }`;
+
+    let functionObj = parse(code);
+    let cfg = CFGGenerator.generateCfg2(functionObj);
+    let ddg = DDGGenerator.generateDDG(cfg);
+    showDDG(ddg, "THESIS-EXAMPLE");  
+});
+
 
 
 // UNSUPPORTED TESTS

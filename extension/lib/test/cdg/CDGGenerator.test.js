@@ -1,6 +1,5 @@
 const CDGNodeNames = require("../../control-dependency-graph/constants/CDGNodeNames");
 const CDGGenerator = require("../../control-dependency-graph/CDGGenerator");
-const FDTGenerator = require("../../forward-dominance-tree/FDTGenerator");
 const CFGGenerator = require("../../control-flow-graph/CFGGenerator");
 const CDGVisualizer = require("../../control-dependency-graph/CDGVisualizer")
 const Parser = require("../../code-parser-module/Parser");
@@ -186,7 +185,7 @@ it("CDG of while loop", () => {
     expectHasEdge(cdg, entryNode._id, 6);
     expectHasEdge(cdg, 2, 3);   // loop body
     expectHasEdge(cdg, 2, 4);   // loop body
-    expectHasEdge(cdg, 2, 2);   // SRC
+    expectHasEdge(cdg, 2, 2);   // SCR
 
     showCDG(cdg, "CDG5");
 });
@@ -231,8 +230,8 @@ it("CDG of nested while statements", () => {
 
     expectHasEdge(cdg, 8, 9);   // if body
 
-    expectHasEdge(cdg, 3, 3);   // SRC
-    expectHasEdge(cdg, 6, 6);   // SRC
+    expectHasEdge(cdg, 3, 3);   // SCR
+    expectHasEdge(cdg, 6, 6);   // SCR
 
     showCDG(cdg, "CDG6");
 });
@@ -307,7 +306,7 @@ it("CDG of for loop", () => {
     expectHasEdge(cdg, entryNode._id, 9);
     expectHasEdge(cdg, entryNode._id, 10);
 
-    expectHasEdge(cdg, 4, 4); // SRC
+    expectHasEdge(cdg, 4, 4); // SCR
     expectHasEdge(cdg, 4, 5); // for loop body
     expectHasEdge(cdg, 4, 6); // for loop body
     expectHasEdge(cdg, 4, 8); // i++
@@ -348,7 +347,7 @@ it("CDG of loop with break", () => {
     expectHasEdge(cdg, 3, 5);   // "else" body
     expectHasEdge(cdg, 3, 6);   // "else" body
 
-    // Node 3 is NOT a SRC because of the break statement in node 4.
+    // Node 3 is NOT a SCR because of the break statement in node 4.
 
     showCDG(cdg, "CDG9");
 });
@@ -446,6 +445,60 @@ it("CDG with Switch & Break Statement ", () => {
 });
 
 
+    it("thesis example", () => {
+    let code = `
+    function thesis_example(x){
+        let pos = x;        // 1
+        let found = false; // 2
+        while (!found && pos >= 0){ // 3,4
+            if (pos === 1){    // 5
+                found = true;  // 6
+            }
+            pos--;          // 7
+        }
+        return found; // 8
+    }`;
+
+    let functionObj = parse(code);
+    let cfg = CFGGenerator.generateCfg2(functionObj);
+    let cdg = CDGGenerator.generateCDG(cfg);
+    let entryNode = cdg._nodes.find(n => n._id === CDGNodeNames.ENTRY);
+
+    console.log("Printed cfg");
+    cfg._nodes.forEach((node) => {
+        const cfgNode = cfg._nodes.find(n => n._id === node.id);
+        const stmt = cfgNode?._statement;
+        console.log( `Node ${node.id} → children: [${node._edges.map(e => e.target).join(", ")}] Statement: ${typeof stmt === "string" ? stmt : JSON.stringify(stmt)}`);
+    });
+
+    showCDG(cdg, "ThesisExample");
+});
+
+
+// Multimple SCRs example
+it("multiple SCRs", () => {
+    let code = `
+    function foo(n, m, p){
+        while (n<40){   // 2
+            n *= 2;      // 3
+            while (m > 0){  // 4
+                m--;         // 5
+                while (p < 10){ // 6
+                    p++;         // 7
+                }
+            }
+        }
+    }
+    `;
+
+    let functionObj = parse(code);
+    let cfg = CFGGenerator.generateCfg2(functionObj);
+    let cdg = CDGGenerator.generateCDG(cfg);
+    let entryNode = cdg._nodes.find(n => n._id === CDGNodeNames.ENTRY); 
+    showCDG(cdg, "CDG13");
+});
+
+
 // Bug(?): Entry node doesn't connect ENTRY to (first iteration) of node 2
 // Clarification: Fomral Definition of CDG does not differentiate between first iteration and subsequent iterations. Hence, the control dependency of the DO-WHILE loop body on the condition is represented even though in the first iteration, the body executes unconditionally.
 it("Do-while-loop", () => {
@@ -474,4 +527,3 @@ it("Do-while-loop", () => {
 
     showCDG(cdg, "CDG12");
 });
-

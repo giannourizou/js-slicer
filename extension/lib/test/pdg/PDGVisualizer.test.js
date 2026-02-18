@@ -1763,28 +1763,72 @@ it("PDGTest41", () => {
 
     expectHasControlEdge(pdg, entryNode._id, 1);
     expectHasControlEdge(pdg, entryNode._id, 2);
+    expectHasControlEdge(pdg, 2, 2);
     expectHasControlEdge(pdg, 2, 3);
     expectHasControlEdge(pdg, 2, 4);
     expectHasControlEdge(pdg, entryNode._id, 5);
     expectHasControlEdge(pdg, entryNode._id, 6);
 
-
-    // exei as poume 3->3 def-def.
-    // de tha eprepe na yparxei afou xrhsimopoieitai to y sto node 2
-
-    /*
-    expectHasDataEdge(pdg, 1, 3);
+    expectHasDataEdge(pdg, 1, 2);
     expectHasDataEdge(pdg, 1, 5);
-    expectHasDataEdge(pdg, 2, 4);
-    expectHasDataEdge(pdg, 3, 3);
+    expectHasDataEdge(pdg, 2, 3);
+    expectHasDataEdge(pdg, 3, 2);
     expectHasDataEdge(pdg, 3, 5);
-    expectHasDataEdge(pdg, 4, 2);
     expectHasDataEdge(pdg, 4, 4);
 
-    expect(getDataEdges(pdg)).toBe(7);
-    */
+    expect(getDataEdges(pdg)).toBe(6);
 
     showPDG(pdg, "PDGTest41");
+});
+
+
+it("PDGExtensionExample", () => {
+    let code = `
+    function foo(num) {
+    let x = num;
+    if (num > 10) {
+        x = num * 2;
+    } else if (num > 5) {
+        x = num + 3;
+    } else {
+        x = num - 1;
+    }
+    return x;
+    }`;
+
+    let functionObj = parse(code);
+    let cfg = CFGGenerator.generateCfg2(functionObj);
+    let cdg = CDGGenerator.generateCDG(cfg);
+    let ddg = DDGGenerator.generateDDG(cfg);
+    let pdg = PDGGenerator.generatePDG(cdg,ddg);
+    let entryNode = pdg._nodes.find(n => n._id === CDGNodeNames.ENTRY);
+    showPDG(pdg, "EXTENSION_EXAMPLE");
+});
+
+
+it("PDGThesisExample", () => {
+    let code = `
+    function thesis_example(x){
+        let pos = x;            // 1
+        let found = false;      // 2
+        while (!found && pos >= 0){ // 3,4
+            if (pos === 1){     // 5
+                found = true;   // 6
+            }
+            pos--;      // 7
+        }
+        return found;   // 8
+    }
+    `;
+
+    let functionObj = parse(code);
+    let cfg = CFGGenerator.generateCfg2(functionObj);
+    let cdg = CDGGenerator.generateCDG(cfg);
+    let ddg = DDGGenerator.generateDDG(cfg);
+    let pdg = PDGGenerator.generatePDG(cdg,ddg);
+    let entryNode = pdg._nodes.find(n => n._id === CDGNodeNames.ENTRY);
+
+    showPDG(pdg, "PDGThesisExample");
 });
 
 
@@ -1818,9 +1862,8 @@ it("Try-Catch-Finally Statement", () => {
 
     showPDG(pdg, "PDGTestY");
 });
-*/
 
-/*
+
 // Expression Statement - Shouldn't define anything
 // CFG Bug: Skips node 3 after ExpressionStatement node
 it("ExpressionStatement", () => {
