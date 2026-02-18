@@ -37,8 +37,7 @@ class DDGVisualizer {
        for (let node of ddg._nodes) {
             let label;
             if (node._statement) {
-                label = node._statement.asText();
-                digraph += `\t"${node._id}" [label="${node._id}"];\n`;
+                digraph += `\t"${node._id}" [label="${node._id}: ${node._statement.asText()}"];\n`;
             } else {
                 continue; // exit node
             }

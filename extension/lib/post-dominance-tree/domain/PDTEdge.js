@@ -1,4 +1,4 @@
-class FDTEdge {
+class PDTEdge {
     constructor(source, target, condition) {
         this._source = source;
         this._target = target;
@@ -21,4 +21,4 @@ class FDTEdge {
     }
 }
 
-module.exports = FDTEdge;
+module.exports = PDTEdge;

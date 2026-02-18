@@ -1,7 +1,7 @@
 const CDGEdge = require("../domain/CDGEdge");
 const CDGNodeNames = require("../constants/CDGNodeNames");
 
-// Checks if node Y post dominates node X by traversing up the FDT 
+// Checks if node Y post dominates node X by traversing up the PDT 
 const postDominates = (yID, xID, immediateDomMap) => {
     let currentID = xID;
     while (currentID !==0) { 
@@ -21,32 +21,22 @@ const findCDNodes = (cfg, xID, yID, immediateDomMap, condition) => {
 
     while (toVisit.length > 0) {
         let cID = toVisit.shift();
-
-        if (cID === xID) continue;
+        if (cID <= xID) continue;
         visited.add(cID);
-
         let cNode = cfg._nodes.find(n => n._id === cID);
         if (!cNode) continue;
-
         if (cNode._edges.length === 1) { // Sequential node
-            cNode._edges.forEach(edge => {
-                let successorID = edge._targetId;
-                if (visited.has(successorID) || successorID === xID) return;
-                if (successorID < xID) return; // Skip back edge
-                
+                let successorID = cNode._edges[0]._targetId;
+                if (visited.has(successorID) || successorID <= xID) continue;
                 if (!postDominates(successorID, xID, immediateDomMap)) {
                     CDNodes.push({nodeId: successorID, condition: condition});
                     toVisit.push(successorID);
                 }
-            });
-
         } else if (cNode._edges.length > 1) {   // Branch node
             let imDomID = immediateDomMap[cID]; // All branch edges meet at the immediate dominator
-            if (!imDomID || imDomID === 0) return;
-            
+            if (!imDomID || imDomID === 0) continue;
             if (!postDominates(imDomID, xID, immediateDomMap)) {
-                if (imDomID < xID) return; // Skip back edge
-
+                if (imDomID <= xID) continue; // Skip back edge
                 CDNodes.push({nodeId: imDomID, condition: condition});
                 toVisit.push(imDomID);
             }
@@ -78,8 +68,9 @@ const getCDGNodeEdges = (cfg, nodeX, immediateDomMap) => {
             });
             if (isStronglyConnectedRegion && 
                 !edges.some(e => e._source === nodeX._id && e._target === nodeX._id)) {
-                edges.push(new CDGEdge(nodeX._id, nodeX._id, null));
+                edges.push(new CDGEdge(nodeX._id, nodeX._id, "true"));
             }
+
         }
     });
     return edges;
@@ -102,7 +93,7 @@ const getCDGEntryNodeEdges = (cfg, cdgNodes) => {
 
     cfg._nodes.forEach(node => {
         if (!CDNodes.has(node._id)) {
-            entryNodeEdges.push(new CDGEdge(CDGNodeNames.ENTRY, node._id, null));
+            entryNodeEdges.push(new CDGEdge(CDGNodeNames.ENTRY, node._id, ""));
         }
     });
     return entryNodeEdges;

@@ -1,6 +1,6 @@
-const FDTNode = require("../../forward-dominance-tree/domain/FDTNode");
-const FDTEdge = require("../../forward-dominance-tree/domain/FDTEdge");
-const FDT = require("../../forward-dominance-tree/domain/FDT");
+const PDTNode = require("../../post-dominance-tree/domain/PDTNode");
+const PDTEdge = require("../../post-dominance-tree/domain/PDTEdge");
+const PDT = require("../../post-dominance-tree/domain/PDT");
 const Graph = require("../../utils/graphUtils");
 const VariableDeclaration = require("../../code-parser-module/domain/VariableDeclaration");
 const DDGEdge = require("../../data-dependence-graph/domain/DDGEdge");
@@ -85,19 +85,11 @@ class CFG {
         this._nodes = value;
     }
 
-    getForwardDominanceTree() { 
-        let dominatorsMap = this.getNodesImmediateDominators();      
-        let fdtNodes = this._nodes.map((node) => {
-        return new FDTNode(node._id, null, node._statement, this.getFDTNodeEdges(node, dominatorsMap))});
-        return new FDT(fdtNodes);
-    }
-
-
     getNodesImmediateDominators() {
         let immediateDomMap = {};
         let exitNode = this.getExitNode();
         this._nodes.forEach((node) => {
-            pathsToExit = this.getPathsToNode(node._id, exitNode._id);
+            let pathsToExit = this.getPathsToNode(node._id, exitNode._id);
 
             // Formal Definition: A node X is post-dominated by a node Y in G if every directed path from X to EXIT (not including X) contains Y. 
             let nodeDominants = [];
@@ -125,14 +117,14 @@ class CFG {
         return immediateDomMap;
     }
 
-    getFDTNodeEdges(cfgNode, dominatorsMap) {
-        let fdtEdges = [];
+    getPDTNodeEdges(node, dominatorsMap) {
+        let pdtEdges = [];
         for (const key in dominatorsMap) {
-            if (dominatorsMap[key] === cfgNode._id) {
-                fdtEdges.push(new FDTEdge(cfgNode.id, parseInt(key)));
+            if (dominatorsMap[key] === node._id) {
+                pdtEdges.push(new PDTEdge(node._id, parseInt(key)));
             }
         }
-        return fdtEdges;
+        return pdtEdges;
     }
 
     getAllEdges() {
@@ -239,6 +231,7 @@ class CFG {
        
         for (let i in allVars) {
             let variable = allVars[i];
+            let types;
 
             // Same name variable declaration, skip
             if (toNode._statement instanceof VariableDeclaration 
@@ -318,7 +311,6 @@ class CFG {
         let visited = new Set();
         let curNode = node;
         let curScope = node._scope;
-
         while (curScope !== 0 && !visited.has(curNode._id)) {
             if (curScope === targetScope) return true;
             visited.add(curNode._id);

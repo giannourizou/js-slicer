@@ -34,7 +34,7 @@ class FDTVisualizer {
 
        for (let node of fdt._nodes) {
             if (node._statement) {
-                digraph += `\t"${node._id}" [label="${node._id}"];\n`; // Show just the node id
+                digraph += `\t"${node._id}" [label="${node._id}: ${node._statement.asText()}"];\n`;
             } else {
                 digraph += `\t"${node._id}" [label="EXIT", shape=oval];\n`;
             }

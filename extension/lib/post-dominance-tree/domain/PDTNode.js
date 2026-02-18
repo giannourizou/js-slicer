@@ -1,4 +1,4 @@
-class FDTNode {
+class PDTNode {
 
     constructor(id,executionCondition,statement,edges) {
         this._id = id;
@@ -40,7 +40,7 @@ class FDTNode {
     }
 
     hasEdgeTo(targetNodeId) {
-         let result = this.edges.filter((e) => e.target === targetNodeId);
+        let result = this.edges.filter((e) => e.target === targetNodeId);
         if (result && result.length > 0) {
             return true;
         }
@@ -48,4 +48,4 @@ class FDTNode {
     }
 
 }
-module.exports = FDTNode;
+module.exports = PDTNode;

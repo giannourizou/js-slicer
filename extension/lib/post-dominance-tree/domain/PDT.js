@@ -1,4 +1,4 @@
-class FDT {
+class PDT {
 
     constructor(nodes) {
         this._nodes = nodes;
@@ -30,11 +30,12 @@ class FDT {
     }
 
     getImmediateDominantId(nodeId){
-        let fdtEdges = this.getAllEdges();
-        let foundEdge = fdtEdges.find(edge => edge._target === nodeId)
+        let pdtEdges = this.getAllEdges();
+        let foundEdge = pdtEdges.find(edge => edge._target === nodeId)
         if(!foundEdge) return ;
         return foundEdge._source;
     }
+    
     getAllEdges(){
         return this._nodes.flatMap(node => {
             return node._edges;
@@ -42,4 +43,4 @@ class FDT {
     }
 
 }
-module.exports = FDT;
+module.exports = PDT;
