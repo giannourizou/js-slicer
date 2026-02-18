@@ -1,0 +1,1061 @@
+const CFGGenerator = require("../../control-flow-graph/CFGGenerator");
+const DDGGenerator = require("../../data-dependence-graph/DDGGenerator");
+const DDGVisualizer = require("../../data-dependence-graph/DDGVisualizer");
+const Parser = require("../../code-parser-module/Parser");
+
+function parse(str) {
+    return Parser.parse(str.split("\n"));
+}
+
+function expectHasEdge(ddg, source, target) {
+    expect(ddg.hasEdge(source, target)).toBe(true);
+}
+
+function showDDG(ddg, filename) {
+    let visualizer = new DDGVisualizer(ddg, filename);
+    visualizer.exportToDot();
+}
+
+function printDDG(cfg,ddg){
+    console.log("Printed DDG");
+    ddg._nodes.forEach((node) => {
+        const cfgNode = cfg._nodes.find(n => n._id === node.id);
+        const stmt = cfgNode?._statement;
+        console.log( `Node ${node.id} → children: [${node._edges.map(e => e.target).join(", ")}] Statement: ${typeof stmt === "string" ? stmt : JSON.stringify(stmt)}`);
+    });
+}
+
+
+it("throws error when CFG is missing", () => {
+    expect(() => {
+        DDGGenerator.generateDDG(null);
+    }).toThrow("Missing required param.");
+});
+
+
+it("DDG1 - Simple Def-Use", () => {
+    let code = `
+    function foo(){
+        let a = 1   // 1
+        let b = a   // 2
+        let c = b   // 3
+        let d = b   // 4
+    }
+    `;
+
+    let functionObj = parse(code);
+    let cfg = CFGGenerator.generateCfg2(functionObj);
+    let ddg = DDGGenerator.generateDDG(cfg);
+
+    expect(ddg._nodes.length).toBe(5);
+    
+    expectHasEdge(ddg,1,2); // def-use
+    expectHasEdge(ddg,2,3); // def-use
+    expectHasEdge(ddg,2,4); // def-use
+
+    showDDG(ddg, "DDG1");
+});
+
+
+it("DDG2 - Def-Use & Def-Def Intervening Definition", () =>{
+    let code = `
+    function foo(){
+        let a = 1   // 1
+        let b = 2   // 2
+        b = 10      // 3
+        let c = b   // 4
+    }
+    `;
+
+    let functionObj = parse(code);
+    let cfg = CFGGenerator.generateCfg2(functionObj);
+    let ddg = DDGGenerator.generateDDG(cfg);
+
+    expect(ddg._nodes.length).toBe(5);
+
+    expectHasEdge(ddg, 2, 3);   // def-def (b)
+    expectHasEdge(ddg, 3, 4);   // def-use (b)
+    expect(ddg.hasEdge(2, 4)).toBe(false);  // no def-use due to intervening definition
+
+    showDDG(ddg, "DDG2");
+});
+
+
+it("DDG3 - Use-Def & Intervening Definition", () => {
+    let code = `
+    function foo(){
+        let a = 1   // 1
+        let b = a   // 2
+        a = c + 1   // 3
+        let d = a   // 4
+    }
+    `;
+
+    let functionObj = parse(code);
+    let cfg = CFGGenerator.generateCfg2(functionObj);
+    let ddg = DDGGenerator.generateDDG(cfg);
+
+    expect(ddg._nodes.length).toBe(5);
+
+    
+    // expectHasEdge(ddg,1,3); // def-def (a) NOT a def-def because a is used in node 2
+
+    expectHasEdge(ddg,1,2); // def-use (a)
+    expectHasEdge(ddg,2,3); // use-def (a)
+    expectHasEdge(ddg,3,4); // def-use (a)
+    expect(ddg.hasEdge(1,4)).toBe(false); // no use-def due to intervening definition
+
+    showDDG(ddg, "DDG3");
+});
+
+
+it("DDG4 - Assignment Statement with 2+ variables", () => {
+    let code = `
+    function foo(){
+        let a = 1               // 1
+        let b = a               // 2
+        let c = b + a + 6       // 3
+        b = a + b - c + 6       // 4
+    }
+    `;
+
+    let functionObj = parse(code);
+    let cfg = CFGGenerator.generateCfg2(functionObj);
+    let ddg = DDGGenerator.generateDDG(cfg);
+
+    expect(ddg._nodes.length).toBe(5);
+
+    expectHasEdge(ddg,1,2); // def-use(a)
+    expectHasEdge(ddg,1,3); // def-use(a)
+    expectHasEdge(ddg,1,4); // def-use(a)
+    expectHasEdge(ddg,2,3); // def-use(b)
+    expectHasEdge(ddg,2,4); // def-use(b)
+    expectHasEdge(ddg,3,4); // def-use(c) & use-def(b)
+
+    showDDG(ddg, "DDG4");
+});
+
+
+it("DDG5 - If/Else Statement", () =>{
+    let code = `
+    function foo(){
+        let a = 1               // 1
+        let b = 2               // 2
+        if(a > b){              // 3
+            b = a + 10          // 4
+        } else {
+            b = a - 10          // 5
+        }
+        let c = b               // 6
+    }
+    `;
+
+    let functionObj = parse(code);
+    let cfg = CFGGenerator.generateCfg2(functionObj);
+    let ddg = DDGGenerator.generateDDG(cfg);
+
+    expect(ddg._nodes.length).toBe(7);
+
+    expectHasEdge(ddg,1,3); // def-use (a)
+    expectHasEdge(ddg,1,4); // def-use (a)
+    expectHasEdge(ddg,1,5); // def-use (a)
+    expectHasEdge(ddg,2,3); // def-use (b)
+
+    // NOT def-def edges because b is used in node 3
+    //expectHasEdge(ddg,2,4); // def-def (b)
+    //expectHasEdge(ddg,2,5); // def-def (b)
+
+    expectHasEdge(ddg,3,4); // use-def (b)
+    expectHasEdge(ddg,3,5); // use-def (b)
+    expectHasEdge(ddg,4,6); // def-use (b)
+    expectHasEdge(ddg,5,6); // def-use (b)
+
+    showDDG(ddg, "DDG5");
+});
+
+
+it("DDG6 - For Loop Statement", () =>{
+    let code = `
+    function foo(){
+        let sum = 0             // 1    
+        for(let i = 0; i < 10; i++){ // 2, 3, 5
+            sum = sum + i       // 4
+        }
+        let avg = sum / 10      // 6
+    }
+    `;  
+
+    let functionObj = parse(code);
+    let cfg = CFGGenerator.generateCfg2(functionObj);
+    let ddg = DDGGenerator.generateDDG(cfg);
+
+    expect(ddg._nodes.length).toBe(7);
+
+    expectHasEdge(ddg,1,4); // def-use (sum)
+    expectHasEdge(ddg,1,6); // def-use (sum)
+    expectHasEdge(ddg,2,3); // def-use (i)
+    expectHasEdge(ddg,2,4); // def-use (i)
+    expectHasEdge(ddg,2,5); // def-use (i)
+    expectHasEdge(ddg,3,5); // use-def (i)
+    expectHasEdge(ddg,4,4); // def-use (sum)
+    expectHasEdge(ddg,4,5); // use-def (i)
+    expectHasEdge(ddg,4,6); // def-use (sum)
+    expectHasEdge(ddg,5,3); // def-use (i)
+    expectHasEdge(ddg,5,4); // def-use (i)
+    expectHasEdge(ddg,5,5); // def-use (i)
+
+    showDDG(ddg, "DDG6");
+});
+
+
+it("DDG7 - Switch & Break Statement ", () => {
+    let code = `
+    function foo(){
+    let a = 1;          //1
+    let b = 4;          //2
+    switch(a) {         //3
+        case 1:         
+            b = a;      //4
+            break;      //5
+        case 2:         
+            let c = a;  //6
+            break;      //7
+        default:        
+            let d = b + a;  // 8
+        }
+    }
+    `;
+
+    let functionObj = parse(code);
+    let cfg = CFGGenerator.generateCfg2(functionObj);
+    let ddg = DDGGenerator.generateDDG(cfg);
+
+    expect(ddg._nodes.length).toBe(9);
+
+    expectHasEdge(ddg,1,3); // def-use (a)
+    expectHasEdge(ddg,1,4); // def-use (a)
+    expectHasEdge(ddg,1,6); // def-use (a)
+    expectHasEdge(ddg,1,8); // def-use (a)
+
+    expectHasEdge(ddg,2,4); // def-def (b)
+    expectHasEdge(ddg,2,8); // def-use (b)
+    
+    showDDG(ddg, "DDG7");
+})
+
+
+it("DDG8 - While Loop & Continue Statement", () => {
+    let code = `
+    function foo(){
+        let x = 0;              //1
+        let sum = 0;            //2
+        while(x < 10){          //3
+            x = x + 1;          //4
+            if(x % 2 == 0){     //5
+                continue;       //6
+            }
+            sum = sum + x;      //7
+        }
+        let avg = sum / 10;     //8
+    }
+    `;
+
+    let functionObj = parse(code);
+    let cfg = CFGGenerator.generateCfg2(functionObj);
+    let ddg = DDGGenerator.generateDDG(cfg);
+
+    expect(ddg._nodes.length).toBe(9);
+
+    expectHasEdge(ddg,1,3); // def-use (x)
+    expectHasEdge(ddg,1,4); // def-use (x)
+    expectHasEdge(ddg,2,7); // def-use (sum)
+    expectHasEdge(ddg,2,8); // def-use (sum)
+    expectHasEdge(ddg,3,4); // use-def (x)
+    expectHasEdge(ddg,4,3); // def-use (x)
+    expectHasEdge(ddg,4,4); // def-use (x)
+    expectHasEdge(ddg,4,5); // def-use (x)
+    expectHasEdge(ddg,4,7); // def-use (x)
+    expectHasEdge(ddg,5,4); // use-def (x)
+    expectHasEdge(ddg,7,4); // use-def (x)
+    expectHasEdge(ddg,7,7); // def-use (sum)
+    expectHasEdge(ddg,7,8); // def-use (sum)
+
+    showDDG(ddg, "DDG8");
+})
+
+
+it("DDG9 - Arrays - Simple Access", () => {
+    let code =`
+    function foo(){
+        let arr = [1,2,3];  // 1 
+        let x = arr[0];     // 2
+        let y = arr[1];     // 3
+        let z = x + y;      // 4
+    }`
+
+    let functionObj = parse(code);
+    let cfg = CFGGenerator.generateCfg2(functionObj);
+    let ddg = DDGGenerator.generateDDG(cfg);
+
+    expect(ddg._nodes.length).toBe(5);
+
+    expectHasEdge(ddg,1,2); // def-use (arr)
+    expectHasEdge(ddg,1,3); // def-use (arr)
+    expectHasEdge(ddg,2,4); // def-use (x)
+    expectHasEdge(ddg,3,4); // def-use (y)
+
+    showDDG(ddg, "DDG9");
+})
+
+
+/* ARRAY HANDLING:
+ * An array is considered as a single variable.
+ * Specific array indices are not tracked separately.
+ * Any array element modification creates dependencies on the entire array.
+ * When iterating through an array, the loop variable is tracked.
+ * 
+*/
+
+
+it("DDG10a - Arrays - Update Element", () =>{
+    let code =`
+    function foo() {
+        let arr = [1,2,3];  // 1
+        arr[1] = arr[0];    // 2
+        let x = arr[0];     // 3
+    }`
+
+    let functionObj = parse(code);
+    let cfg = CFGGenerator.generateCfg2(functionObj);
+    let ddg = DDGGenerator.generateDDG(cfg);
+
+    expect(ddg._nodes.length).toBe(4);
+
+    expectHasEdge(ddg, 1, 2); // def-use (arr)
+    expectHasEdge(ddg, 2, 3); // def-use (arr)
+    expect(ddg.hasEdge(1,3)).toBe(false); // should not be a def-use (arr) due to intervening definition
+
+    showDDG(ddg, "DDG10a");
+});
+
+
+it("DDG10b - Arrays - Update Element", () =>{
+    let code =`
+    function foo() {
+        let arr = [1,2,3];  // 1
+        for (let i = 0; i < arr.length; i++) { // 2,3,6
+            console.log(arr[i]); // 4
+            arr[i] = arr[i+1];    // 5
+        }
+    }`
+
+    let functionObj = parse(code);
+    let cfg = CFGGenerator.generateCfg2(functionObj);
+    let ddg = DDGGenerator.generateDDG(cfg);
+
+    expect(ddg._nodes.length).toBe(7);
+    
+    expectHasEdge(ddg, 1, 3); // def-use (arr)
+    expectHasEdge(ddg, 1, 4); // def-use (arr)
+    expectHasEdge(ddg, 1, 5); // def-use (arr)
+
+    expectHasEdge(ddg, 2, 3); // def-use (i)
+    expectHasEdge(ddg, 2, 4); // def-use (i)
+    expectHasEdge(ddg, 2, 5); // def-use (i)
+    expectHasEdge(ddg, 2, 6); // def-use (i)
+
+    expectHasEdge(ddg, 3, 5); // use-def (arr)
+    expectHasEdge(ddg, 3, 6); // use-def (i)
+
+    expectHasEdge(ddg, 4, 5); // use-def (i)
+    expectHasEdge(ddg, 4, 6); // use-def (arr)
+    
+    expectHasEdge(ddg, 5, 3); // def-use (arr)
+    expectHasEdge(ddg, 5, 4); // def-use (arr)
+    expectHasEdge(ddg, 5, 5); // def-use (arr)
+    expectHasEdge(ddg, 5, 6); // use-def(i)
+
+    expectHasEdge(ddg, 6, 3); // def-use (i)
+    expectHasEdge(ddg, 6, 4); // def-use (i)
+    expectHasEdge(ddg, 6, 5); // def-use (i)
+    expectHasEdge(ddg, 6, 6); // def-use (i) 
+
+    showDDG(ddg, "DDG10b");
+});
+
+
+it("DDG11 - Arrays - Mutating Methods", () => {
+    let code =`
+    function foo(){
+        let arr = [1,2,3];      // 1
+        arr.push(4);            // 2
+        arr.fill('3',0,1);      // 3
+        arr.pop();              // 4
+        arr.reverse()           // 5
+    }`
+
+    let functionObj = parse(code);
+    let cfg = CFGGenerator.generateCfg2(functionObj);
+    let ddg = DDGGenerator.generateDDG(cfg);
+
+    expect(ddg._nodes.length).toBe(6);
+
+    expectHasEdge(ddg, 1, 2); // def-use 
+    expectHasEdge(ddg, 2, 3); // def-use 
+    expectHasEdge(ddg, 3, 4); // def-use 
+    expectHasEdge(ddg, 4, 5); // def-use
+
+    showDDG(ddg, "DDG11");
+});
+
+
+it("DDG12 - Arrays - Non-mutating methods", () => {
+    let code =`
+    function foo(){
+        let arr = [1,2,3]         // 1 
+        let x = arr.slice(0,1)    // 2
+        let y = arr.join(',')     // 3
+        x.push('2');              // 4
+        let z = x.includes('2')   // 5
+    }`
+
+    let functionObj = parse(code);
+    let cfg = CFGGenerator.generateCfg2(functionObj);
+    let ddg = DDGGenerator.generateDDG(cfg);
+
+    expect(ddg._nodes.length).toBe(6);
+
+    expectHasEdge(ddg,1,2) // def-use (arr)
+    expectHasEdge(ddg,1,3) // def-use (arr)
+    expectHasEdge(ddg,2,4) // def-use (x)
+    expectHasEdge(ddg,4,5) // def-use (x)
+    expect(ddg.hasEdge(2,5)).toBe(false) // intervening definition of x
+
+    showDDG(ddg, "DDG12");
+})
+
+
+it("DDG13 - Return statement", () => {
+    let code =`
+    function foo(){
+        let x = 6       // 1 
+        let y = 7       // 2
+        return x + y;   // 3
+    }`
+
+    let functionObj = parse(code);
+    let cfg = CFGGenerator.generateCfg2(functionObj);
+    let ddg = DDGGenerator.generateDDG(cfg);
+
+    expect(ddg._nodes.length).toBe(4);
+
+    expectHasEdge(ddg,1,3); // def-use (x)
+    expectHasEdge(ddg,2,3); // def-use (y)
+
+    showDDG(ddg, "DDG13");
+})
+
+
+it("DDG14 - Arrow Functions", () =>{
+    let code =`
+    function foo(){
+        let arr = [1,2,3];                       // 1 
+        let doubled = arr.map(x => x*2);         // 2
+        let filtered = doubled.filter(e => e<6); // 3
+        let two = arr[1];                        // 4
+        doubled = doubled.filter(x => x > two);  // 5
+    }`
+
+    let functionObj = parse(code);
+    let cfg = CFGGenerator.generateCfg2(functionObj);
+    let ddg = DDGGenerator.generateDDG(cfg);
+
+    expect(ddg._nodes.length).toBe(6);
+
+    expectHasEdge(ddg,1,2); // def-use (arr)
+    expectHasEdge(ddg,1,4); // def-use (arr)
+    expectHasEdge(ddg,2,3); // def-use (doubled)
+    expectHasEdge(ddg,2,5); // def-use (doubled)
+    expectHasEdge(ddg,3,5); // use-def (doubled)
+    expectHasEdge(ddg,4,5); // def-use (two)
+
+    showDDG(ddg, "DDG14");
+});
+
+
+it("DDG15 - Logical Operators", () =>{
+    let code =`
+    function foo(){
+        let x = true;   // 1
+        let y = false;  // 2
+        let z = true;   // 3
+        return x || y && z; // 4
+    }`
+
+    let functionObj = parse(code);
+    let cfg = CFGGenerator.generateCfg2(functionObj);
+    let ddg = DDGGenerator.generateDDG(cfg);
+
+    expect(ddg._nodes.length).toBe(5);
+
+    expectHasEdge(ddg,1,4); // def-use (x)
+    expectHasEdge(ddg,2,4); // def-use (y)
+    expectHasEdge(ddg,3,4); // def-use (z)
+
+    showDDG(ddg, "DDG15");
+});
+
+
+it("DDG16 - Ternary Operator", () =>{
+    let code =`
+    function foo(){
+        let x = 10;           // 1
+        let y = 5;            // 2
+        let max = x>y ? x : y // 3
+        x = max;              // 4
+    }`
+
+    let functionObj = parse(code);
+    let cfg = CFGGenerator.generateCfg2(functionObj);
+    let ddg = DDGGenerator.generateDDG(cfg);
+
+    expect(ddg._nodes.length).toBe(5);
+
+    expectHasEdge(ddg,1,3); // def-use (x)
+
+    // NOT a def-def because x is used in node 3
+    //expectHasEdge(ddg,1,4); // def-def (x)
+    
+    expectHasEdge(ddg,2,3); // def-use (y)
+    expectHasEdge(ddg,3,4); // def-use (max) & use-def (x)
+
+    showDDG(ddg, "DDG16");
+});
+
+
+it("DDG17 - Unary Operators", () =>{
+    let code =`
+    function foo(){
+        let x = 0;           // 1
+        let y = ~x;          // 2
+        let z = typeof x;    // 3
+        let e = !!x;         // 4
+        
+    }`
+
+    let functionObj = parse(code);
+    let cfg = CFGGenerator.generateCfg2(functionObj);
+    let ddg = DDGGenerator.generateDDG(cfg);
+
+    expect(ddg._nodes.length).toBe(5);
+
+    expectHasEdge(ddg,1,2); // def-use(x)
+    expectHasEdge(ddg,1,3); // def-use(x)
+    expectHasEdge(ddg,1,4); // def-use(x)
+
+    showDDG(ddg, "DDG17");
+});
+
+
+it("DDG18 - Compound Operators", () =>{
+    let code =`
+    function foo() {
+        let sum = 0;    // 1
+        for (let i = 0; i < 6; i++){     // 2,3,5
+            sum += i;                    // 4
+        }
+        sum -= 6;   // 6
+        return sum; // 7
+    }`
+
+    let functionObj = parse(code);
+    let cfg = CFGGenerator.generateCfg2(functionObj);
+    let ddg = DDGGenerator.generateDDG(cfg);
+
+    expect(ddg._nodes.length).toBe(8);
+
+    expectHasEdge(ddg,1,4); // def-use (sum)
+    expectHasEdge(ddg,1,6); // def-use (sum)
+    expectHasEdge(ddg,2,3); // def-use(i)
+    expectHasEdge(ddg,2,4); // def-use(i)
+    expectHasEdge(ddg,2,5); // def-use (i)
+    expectHasEdge(ddg,3,5); // use-def(i)
+    expectHasEdge(ddg,4,4); // def-use (sum)
+    expectHasEdge(ddg,4,5); // def-use (i)
+    expectHasEdge(ddg,4,6); // def-use (sum)
+    expectHasEdge(ddg,5,3); // def-use(i)
+    expectHasEdge(ddg,5,4); // def-use(i)
+    expectHasEdge(ddg,5,5); // def-use (i)
+    expectHasEdge(ddg,6,7); // def-use (sum)
+    
+    showDDG(ddg, "DDG18");
+});
+
+
+it("DDG19 - Nested Loops", () =>{
+    let code =`
+    function foo() {
+        let sum = 0;    // 1
+        for (let i = 0; i < 6; i++){     // 2,3,8
+            for (let j = 0; j < 7; j++){ // 4,5,7
+                sum += i + j;            // 6
+            }
+        }
+        return sum; // 9
+    }`
+
+
+    let functionObj = parse(code);
+    let cfg = CFGGenerator.generateCfg2(functionObj);
+    let ddg = DDGGenerator.generateDDG(cfg);
+
+    expect(ddg._nodes.length).toBe(10);
+
+    expectHasEdge(ddg,1,6); // def-use (sum)
+    expectHasEdge(ddg,1,9); // def-use (sum)
+
+    expectHasEdge(ddg,2,3); // def-use(i)
+    expectHasEdge(ddg,2,6); // def-use(i)
+    expectHasEdge(ddg,2,8); // def-use (i)
+
+    expectHasEdge(ddg,3,8); // use-def(i)
+
+    expectHasEdge(ddg,4,5); // def-use(j)
+    expectHasEdge(ddg,4,6); // def-use(j)
+    expectHasEdge(ddg,4,7); // def-use(j)
+
+    expectHasEdge(ddg,5,7); // use-def(j)
+
+    expectHasEdge(ddg,6,6); // def-use(sum)
+    expectHasEdge(ddg,6,7); // use-def(j)
+    expectHasEdge(ddg,6,8); // use-def(i)
+    expectHasEdge(ddg,6,9); // def-use(sum)
+
+    expectHasEdge(ddg,7,5); // def-use(j)
+    expectHasEdge(ddg,7,6); // def-use(j)
+    expectHasEdge(ddg,7,7); // def-use(j)
+
+    expectHasEdge(ddg,8,3); // def-use(i)
+    expectHasEdge(ddg,8,6); // def-use(i)
+    expectHasEdge(ddg,8,8); // def-use(i)
+
+    showDDG(ddg, "DDG19");
+});
+
+
+it("DDG20 - Throw Statement", () =>{
+    let code =`
+    function foo() {
+        let error = "Error"; // 1
+        throw error; // 2
+    }`
+
+    let functionObj = parse(code);
+    let cfg = CFGGenerator.generateCfg2(functionObj);
+    let ddg = DDGGenerator.generateDDG(cfg);
+
+    expect(ddg._nodes.length).toBe(3);
+
+    expectHasEdge(ddg,1,2); // def-use (error)
+
+    showDDG(ddg, "DDG20");
+});
+
+
+/* OBJECT HANDLING:
+ * An object is considered as a single variable.
+ * Specific object properties are not tracked separately.
+ * Any object property modification creates dependencies on the entire object.
+ * When assigning a value to an object's property, the def-use path is tracked.
+ * 
+*/
+
+
+it("DDG21a - Object Property Use", () =>{
+    let code = `
+    function foo() {
+        let x = 'hello';         // 1
+        let y = 'world';         // 2
+        let obj = {a:x, b:y};    // 3
+        let sum = obj.a + obj.b; // 4
+    }`
+
+    let functionObj = parse(code);
+    let cfg = CFGGenerator.generateCfg2(functionObj);
+    let ddg = DDGGenerator.generateDDG(cfg);
+
+    //expect(ddg._nodes.length).toBe(5);
+
+    expectHasEdge(ddg, 1, 3); // def-use(x)
+    expectHasEdge(ddg, 2, 3); // def-use(y)
+    expectHasEdge(ddg, 3, 4); // def-use (obj)
+
+    showDDG(ddg, "DDG21a");
+});
+
+
+it("DDG21b - Object Property Redefine & Use", () =>{
+    let code = `
+    function foo() {
+        let x = 'hello';         // 1
+        let y = 'world';         // 2
+        let obj = {a:x, b:y};    // 3
+        obj.a = "bye";           // 4
+        obj.b = "hi";            // 5
+        console.log(obj.a);      // 6
+    }`
+
+    let functionObj = parse(code);
+    let cfg = CFGGenerator.generateCfg2(functionObj);
+    let ddg = DDGGenerator.generateDDG(cfg);
+
+    expect(ddg._nodes.length).toBe(7);
+
+    expectHasEdge(ddg, 1, 3); // def-use(x)
+    expectHasEdge(ddg, 2, 3); // def-use(y)
+    expectHasEdge(ddg, 3, 4); // def-use(obj)
+    expectHasEdge(ddg, 4, 5); // def-use(obj)
+    expectHasEdge(ddg, 5, 6); // def-use (obj)
+
+    showDDG(ddg, "DDG21b");
+});
+
+
+it("DDG22 - New Expression", () =>{
+    let code = `
+    function foo() {
+        let size = 10;  // 1
+        let arr = new Array(size); // 2 
+    }`
+
+    let functionObj = parse(code);
+    let cfg = CFGGenerator.generateCfg2(functionObj);
+    let ddg = DDGGenerator.generateDDG(cfg);
+
+    expect(ddg._nodes.length).toBe(3);
+
+    expectHasEdge(ddg,1,2); // def-use(size)
+
+    showDDG(ddg, "DDG22");
+});
+
+
+it("DDG23 - Nested Loops (While & For Loop)", () => {
+    let code = `
+    function foo(){
+        let x = 4;                  // 1
+        while (x > 2) {             // 2
+            for(let j=0; j<9; j++) { // 3,4,6
+                console.log(x,j);    // 5
+            }
+            x--;                    // 7
+        }
+    }
+    `;
+
+    let functionObj = parse(code);
+    let cfg = CFGGenerator.generateCfg2(functionObj);
+    let ddg = DDGGenerator.generateDDG(cfg);
+    
+    expectHasEdge(ddg, 1, 2); // def-use(x)
+    expectHasEdge(ddg, 1, 5); // def-use(x)
+    expectHasEdge(ddg, 1, 7); // def-use (x)
+
+    expectHasEdge(ddg, 2, 7); // use-def(x)
+
+    expectHasEdge(ddg, 3, 4); // def-use(j)
+    expectHasEdge(ddg, 3, 5); // def-use(j)
+    expectHasEdge(ddg, 3, 6); // def-use (j)
+
+    expectHasEdge(ddg, 4, 6); // use-def(j)
+
+    expectHasEdge(ddg, 5, 6); // use-def(j)
+    expectHasEdge(ddg, 5, 7); // use-def(x)
+
+    expectHasEdge(ddg, 6, 4); // def-use(j)
+    expectHasEdge(ddg, 6, 5); // def-use(j)
+    expectHasEdge(ddg, 6, 6); // def-use(j)
+
+    expectHasEdge(ddg, 7, 2); // def-use(x)
+    expectHasEdge(ddg, 7, 5); // def-use(x)
+    expectHasEdge(ddg, 7, 7); // def-use (x)
+    showDDG(ddg, "DDG23");
+});
+
+
+it("DDG24 - Different scopes - Same name variables (Shadowing)", () =>{
+    let code = `
+    function foo() {
+        let x = 5;      // 1
+        if (x===3){     // 2
+            let x = 10; // 3
+            let y = x;  // 4
+        }
+        if (x === 4){   // 5
+            let x = 5;  // 6
+            let y = 6;  // 7
+        }
+        let z = x;      // 8
+    }`
+
+    let functionObj = parse(code);
+    let cfg = CFGGenerator.generateCfg2(functionObj);
+    let ddg = DDGGenerator.generateDDG(cfg);
+
+    expect(ddg._nodes.length).toBe(9);
+
+    expectHasEdge(ddg, 1, 2); // def-use(x)
+    expectHasEdge(ddg, 1, 5); // def-use(x)
+    expectHasEdge(ddg, 1, 8); // def-use(x)
+    expectHasEdge(ddg, 3, 4); // def-use(different scope x)
+
+    showDDG(ddg, "DDG24");
+});
+
+
+it("DDG25 - Shadowing - Double nesting", () => {
+    let code = `
+        function foo() {
+            let x = 1;                  // 1
+            if (x>1){                   // 2
+                let x = 2;              // 3
+                if (x>2){               // 4
+                    let x = 3;          // 5
+                    console.log(x);     // 6 
+                }
+                console.log(x);         // 7 
+            }
+            console.log(x);             // 8
+    }`
+
+    let functionObj = parse(code);
+    let cfg = CFGGenerator.generateCfg2(functionObj);
+    let ddg = DDGGenerator.generateDDG(cfg);
+
+    expectHasEdge(ddg, 1, 2); // def-use(outer x)
+    expectHasEdge(ddg, 1, 8); // def-use(outer x)
+    expectHasEdge(ddg, 3, 4); // def-use(middle x)
+    expectHasEdge(ddg, 3, 7); // def-use(middle x)
+    expectHasEdge(ddg, 5, 6); // def-use(inner x)
+
+    showDDG(ddg, "DDG25");
+});
+
+
+it("DDG26 - Shadowing - Loop", () => {
+    let code = `
+    function foo() {
+        let sum = 0;                    // 1
+        for (let i = 0; i < 5; i++) {   // 2, 3, 10
+            if (i > 2) {                // 4
+                let sum = 0;            // 5
+                if (i === 4) {          // 6
+                    continue;           // 7
+                }
+                sum += i;                // 8
+            }
+            sum += 1;                    // 9
+        }
+        return sum;                     // 11
+    }`
+
+    let functionObj = parse(code);
+    let cfg = CFGGenerator.generateCfg2(functionObj);
+    let ddg = DDGGenerator.generateDDG(cfg);
+
+    expectHasEdge(ddg, 1, 9); // def-use(outer sum)
+    expectHasEdge(ddg, 1, 11); // def-use(outer sum)
+    expectHasEdge(ddg, 2, 3); // def-use(i)
+    expectHasEdge(ddg, 2, 4); // def-use(i)
+    expectHasEdge(ddg, 2, 6); // def-use(i)
+    expectHasEdge(ddg, 2, 8); // def-use(i)
+    expectHasEdge(ddg, 2, 10); // def-use(i)
+    expectHasEdge(ddg, 3, 10); // use-def(i)
+    expectHasEdge(ddg, 4, 10); // use-def(i)
+    expectHasEdge(ddg, 5, 8); // def-use(inner sum)
+    expectHasEdge(ddg, 6, 10); // use-def(i)
+    expectHasEdge(ddg, 8, 10); // use-def(i)
+    expectHasEdge(ddg, 9, 9); // def-usε(outer sum)
+    expectHasEdge(ddg, 9, 11); // def-use (outer sum)
+    expectHasEdge(ddg, 10, 3); // def-use(i)
+    expectHasEdge(ddg, 10, 4); // def-use(i)
+    expectHasEdge(ddg, 10, 6); // def-use(i)
+    expectHasEdge(ddg, 10, 8); // def-use(i)
+    expectHasEdge(ddg, 10, 10); // def-use(i)
+
+    showDDG(ddg, "DDG26");
+});
+
+
+it("DDG27 - Shadowing - Double loop & Nesting", () => {
+    let code = `
+    function foo() {
+        let sum = 0;                        // 1
+        for (let i = 0; i < 3; i++) {       // 2, 3, 11
+            sum += i;                       // 4 
+            if (i > 0) {                    // 5
+                let sum = 10;               // 6 
+                for (let j = 0; j < 2; j++) { // 7, 8, 10
+                    sum += j;               // 9 
+                }
+            }
+        }
+        return sum;                         // 12
+    }`
+
+    let functionObj = parse(code);
+    let cfg = CFGGenerator.generateCfg2(functionObj);
+    let ddg = DDGGenerator.generateDDG(cfg);
+    
+    
+    expectHasEdge(ddg, 1, 4);  // def-use (outer sum)
+    expectHasEdge(ddg, 1, 12); // def-use (outer sum)
+    expectHasEdge(ddg, 2, 3); // def-use (i)
+    expectHasEdge(ddg, 2, 4); // def-use (i)
+    expectHasEdge(ddg, 2, 5); // def-use (i)
+    expectHasEdge(ddg, 2, 11); // def-use(i)
+    expectHasEdge(ddg, 3, 11); // use-def(i)
+    expectHasEdge(ddg, 4, 4); // def-use (outer sum)
+    expectHasEdge(ddg, 4, 11); // use-def (i)
+    expectHasEdge(ddg, 4, 12); // def-use (outer sum)
+    expectHasEdge(ddg, 5, 11); // use-def (i)
+    expectHasEdge(ddg, 6, 9); // def-use (inner sum)
+    expectHasEdge(ddg, 7, 8); // def-use (j)
+    expectHasEdge(ddg, 7, 9); // def-use (j)
+    expectHasEdge(ddg, 7, 10); // def-use (j)
+    expectHasEdge(ddg, 8, 10); // use-def (j)
+    expectHasEdge(ddg, 9, 9); // def-use (inner sum)
+    expectHasEdge(ddg, 9, 10); // use-def (j)
+    expectHasEdge(ddg, 10, 8); // def-use (j)
+    expectHasEdge(ddg, 10, 9); // def-use (j)
+    expectHasEdge(ddg, 10, 10); // def-use (j)
+    expectHasEdge(ddg, 11, 3); // def-use (i)
+    expectHasEdge(ddg, 11, 4); // def-use (i)
+    expectHasEdge(ddg, 11, 5); // def-use (i)
+    expectHasEdge(ddg, 11, 11); // def-use (i)
+
+    showDDG(ddg, "DDG27");
+});
+
+
+it("DDG28 - Reassignment shadowing", () => {
+    let code = `
+    function foo() {
+        let x = 10; // 1
+        let y = 15; // 2
+        while (x>0 && y>10){ // 3,4 
+            let x = 0; // 5
+            x--; // 6
+            y--; // 7
+        }
+        if (x === 5 || y === 11) { // 8,9
+            console.log(x,y) // 10
+        }
+    }
+    `;
+
+    let functionObj = parse(code);
+    let cfg = CFGGenerator.generateCfg2(functionObj);
+    let ddg = DDGGenerator.generateDDG(cfg);
+
+    expectHasEdge(ddg, 1, 3);  // def-use (x)
+    expectHasEdge(ddg, 1, 8);  // def-use (x)
+    expectHasEdge(ddg, 1, 10); // def-use (x)
+
+    expectHasEdge(ddg, 2, 4);  // def-use (y)
+    expectHasEdge(ddg, 2, 7);  // def-use (y)
+    expectHasEdge(ddg, 2, 9);  // def-use (y)
+    expectHasEdge(ddg, 2, 10); // def-use (y)
+
+    expectHasEdge(ddg, 4, 7);  // use-def (y)
+    expectHasEdge(ddg, 5, 6);  // def-use (inner x)
+
+    expectHasEdge(ddg, 7, 4);  // def-use (y)
+    expectHasEdge(ddg, 7, 7);  // def-use (y)
+    expectHasEdge(ddg, 7, 9);  // def-use (y)
+    expectHasEdge(ddg, 7, 10); // def-use (y)
+
+    expect(ddg.hasEdge(6, 10)).toBe(false); // same nesting case
+
+    showDDG(ddg, "DDG28");
+});
+
+
+it("DDG29 - Recursive function", () => {
+    let code = `
+    function foo(n) {
+        let a = 1   // 1
+        if (n <= 1) { // 2
+            return 1; // 3
+        }
+        return foo(n - a); // 4
+    }
+    `;
+
+    let functionObj = parse(code);
+    let cfg = CFGGenerator.generateCfg2(functionObj);
+    let ddg = DDGGenerator.generateDDG(cfg);
+
+    expectHasEdge(ddg, 1, 4);  // def-use (a)
+
+    showDDG(ddg, "DDG29");
+});
+
+
+// CFG does not unroll the forEach loop
+// So no def-use edges can be created.
+// Same applies to other higher-order functions (map, filter, reduce, etc.)
+it("DDG30 - ForEach Statement", () => {
+    let code = `
+    function foo(n) {
+        let arr = [1, 2, 3];           // 1
+        let sum = 0;                   // 2
+        arr.forEach(function(item) {   // 3 
+            sum = sum + item;          // 4 
+        });
+        return sum;                    // 5
+    }
+    `;
+
+    let functionObj = parse(code);
+    let cfg = CFGGenerator.generateCfg2(functionObj);
+    let ddg = DDGGenerator.generateDDG(cfg);
+
+    /*
+    console.log("Printed CFG");
+    cfg._nodes.forEach((node) => {
+        const stmt = node?._statement;
+        console.log( `Node ${node.id} → children: [${node._edges.map(e => e.target).join(", ")}] Statement: ${typeof stmt === "string" ? stmt : JSON.stringify(stmt)}`);
+    });
+    */
+
+    showDDG(ddg, "DDG30");
+});
+
+it("THESIS EXAMPLE", () => {
+    let code = `
+    function thesis_example(x){
+        let pos = x;        // 1
+        let found = false; // 2
+        while (!found && pos >= 0){ // 3,4
+            if (pos === 1){    // 5
+                found = true;  // 6
+            }
+            pos--;          // 7
+        }
+        return found; // 8
+    }`;
+
+    let functionObj = parse(code);
+    let cfg = CFGGenerator.generateCfg2(functionObj);
+    let ddg = DDGGenerator.generateDDG(cfg);
+    showDDG(ddg, "THESIS-EXAMPLE");  
+});
+
+
+
+// UNSUPPORTED TESTS
+// Template Literals
+// Spread Operator
+// ArrayPattern (deconstructing an array)
+// SequenceExpression

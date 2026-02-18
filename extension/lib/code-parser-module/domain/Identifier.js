@@ -20,6 +20,14 @@ class Identifier {
         this._name = value;
     }
 
+    getUsedVariableNames() {
+        return [this._name];
+    }
+
+    getDefinedVariable() {
+        return [];
+    }
+
     accept(visitor) {
         visitor.visitIdentifier(this);
     }

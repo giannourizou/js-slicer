@@ -21,6 +21,18 @@
             {
                 "command": "js-slicer.generateCFG",
                 "title": "JS-Slicer CFG"
+            },
+            {
+                "command": "js-slicer.generateCDG",
+                "title": "JS-Slicer CDG"
+            },
+            {
+                "command": "js-slicer.generateDDG",
+                "title": "JS-Slicer DDG"
+            },
+            {
+                "command": "js-slicer.generatePDG",
+                "title": "JS-Slicer PDG"
             }
         ],
         "menus": {
@@ -28,7 +40,22 @@
                 {
                     "when": "resourceLangId == javascript",
                     "command": "js-slicer.generateCFG",
-                    "group": "navigation"
+                    "group": "navigation@1"
+                },
+                {
+                    "when": "resourceLangId == javascript",
+                    "command": "js-slicer.generateCDG",
+                    "group": "navigation@2"
+                },
+                {
+                    "when": "resourceLangId == javascript",
+                    "command": "js-slicer.generateDDG",
+                    "group": "navigation@3"
+                },
+                {
+                    "when": "resourceLangId == javascript",
+                    "command": "js-slicer.generatePDG",
+                    "group": "navigation@4"
                 }
             ]
         }
@@ -39,14 +66,16 @@
         "test": "vscode-test"
     },
     "devDependencies": {
-        "@vscode/test-cli": "^0.0.11",
+        "@vscode/test-cli": "^0.0.12",
         "eslint": "^9.34.0",
         "vscode": "^1.1.37"
     },
     "dependencies": {
         "acorn": "^8.15.0",
         "acorn-walk": "^8.3.4",
-        "globals": "^16.3.0"
+        "globals": "^16.3.0",
+        "lodash": "^4.17.21",
+        "recast": "^0.23.11"
     },
     "repository": {
         "type": "git",

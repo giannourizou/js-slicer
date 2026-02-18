@@ -20,7 +20,5 @@ class Alternate {
         this._body = value;
     }
 
-
-
 }
 module.exports = Alternate;

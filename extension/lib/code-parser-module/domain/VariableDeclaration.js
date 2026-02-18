@@ -1,6 +1,3 @@
-const Identifier = require("./Identifier");
-const Literal = require("./Literal");
-
 class VariableDeclaration {
     constructor(type, names, values) {
         this._type = type;
@@ -42,11 +39,24 @@ class VariableDeclaration {
     }
 
     getUsedVariableNames() {
-        return this._values;
+        let varArray = [];
+
+        if (!this._values) {
+            return varArray;
+        }
+
+        this._values.forEach((v) => {
+            if (v?.getUsedVariableNames) {
+                varArray = varArray.concat(v.getUsedVariableNames());
+            }
+        });
+        return varArray;
     }
 
     getDefinedVariable() {
-        return this._names;
+        let defVars = [];
+        this._names.forEach(name => defVars.push(name._name));
+        return defVars;
     }
 
     accept(visitor) {

@@ -5,7 +5,7 @@ const CFGNode = require("./domain/CFGNode");
 const DecisionNode = require("./domain/DecisionNode");
 
 class CompositeConditionsVisitor {
-    constructor(id, cfg, nesting = -1) {
+    constructor(id, cfg, nesting = -1, scope = 0) {
         this._cfg = !cfg ? new CFG() : cfg;
         this._id = id;
         this._postOrderNodeQueue = [];
@@ -16,6 +16,7 @@ class CompositeConditionsVisitor {
         this._trueEdges = [];
         this._falseEdges = [];
         this._nesting = nesting;
+        this._scope = scope;
     }
 
     /**
@@ -139,7 +140,7 @@ class CompositeConditionsVisitor {
         }
 
         return returnDecisionNode
-            ? new DecisionNode(treeRootNode, this._trueEdges, this._falseEdges, this._nesting)
+            ? new DecisionNode(treeRootNode, this._trueEdges, this._falseEdges, this._nesting, this._scope)
             : { id: this._id, true: this._trueEdges, false: this._falseEdges, root: treeRootNode };
     }
 
@@ -240,7 +241,7 @@ class CompositeConditionsVisitor {
     }
 
     visitConditionalStatement(stmt) {
-        let condStmtVisitor = new CompositeConditionsVisitor(this._id, this._cfg);
+        let condStmtVisitor = new CompositeConditionsVisitor(this._id, this._cfg, this._nesting, this._scope);
         let condResult = condStmtVisitor.visit(stmt.condition, false);
 
         this._id = condResult.id;
@@ -261,7 +262,7 @@ class CompositeConditionsVisitor {
 
         // Visit and process the then statement
         if (stmt._then) {
-            secondVisitor = new CompositeConditionsVisitor(this._id, this._cfg);
+            secondVisitor = new CompositeConditionsVisitor(this._id, this._cfg, this._nesting, this._scope);
 
             let thenResult = secondVisitor.visit(stmt._then, false);
             this._id = thenResult.id;
@@ -277,7 +278,7 @@ class CompositeConditionsVisitor {
 
         // Visit and process the alternate statement
         if (stmt._alternates) {
-            secondVisitor = new CompositeConditionsVisitor(this._id, this._cfg);
+            secondVisitor = new CompositeConditionsVisitor(this._id, this._cfg, this._nesting, this._scope);
 
             let altResult = secondVisitor.visit(stmt._alternates, false);
             this._id = altResult.id;
@@ -311,7 +312,7 @@ class CompositeConditionsVisitor {
         }
 
         // Visit and process the arguement statement
-        let secondVisitor = new CompositeConditionsVisitor(this._id, this._cfg);
+        let secondVisitor = new CompositeConditionsVisitor(this._id, this._cfg, this._nesting, this._scope);
 
         let visitResult = secondVisitor.visit(stmt, false);
 
@@ -347,29 +348,41 @@ class CompositeConditionsVisitor {
         // Only keep logical binary expressions, not left-right seperately
         if (this.validBinaryExpressionOperators.includes(stmt._operator)) {
             let node = new CFGNode(this._id++, null, stmt, [], null);
+            node._nesting = this._nesting;
+            node._scope = this._scope;
             this._postOrderNodeQueue.push(node);
         }
     }
     visitFunctionCall(stmt) {
         let node = new CFGNode(this._id++, null, stmt, [], null);
+        node._nesting = this._nesting;
+        node._scope = this._scope;
         this._postOrderNodeQueue.push(node);
     }
 
     visitVariableDeclaration(stmt) {
         let node = new CFGNode(this._id++, null, stmt, [], null);
+        node._nesting = this._nesting;
+        node._scope = this._scope;
         this._postOrderNodeQueue.push(node);
     }
 
     visitLiteral(stmt) {
         let node = new CFGNode(this._id++, null, stmt, [], null);
+        node._nesting = this._nesting;
+        node._scope = this._scope;
         this._postOrderNodeQueue.push(node);
     }
     visitIdentifier(stmt) {
         let node = new CFGNode(this._id++, null, stmt, [], null);
+        node._nesting = this._nesting;
+        node._scope = this.scope;
         this._postOrderNodeQueue.push(node);
     }
     visitMemberExpression(stmt) {
         let node = new CFGNode(this._id++, null, stmt, [], null);
+        node._nesting = this._nesting;
+        node._scope = this._scope;
         this._postOrderNodeQueue.push(node);
     }
 }

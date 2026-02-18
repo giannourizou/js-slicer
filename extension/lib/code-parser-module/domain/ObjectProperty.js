@@ -1,6 +1,3 @@
-const Identifier = require("./Identifier");
-const Literal = require("./Literal");
-
 class ObjectProperty {
     constructor(key, value) {
         this._key = key;
@@ -24,11 +21,15 @@ class ObjectProperty {
     }
 
     getUsedVariableNames() {
-        if (this._value instanceof Identifier) return [this._value._name];
+        let varArray = [];
 
-        if (this._value instanceof Literal) return [];
-
-        return this._value.getUsedVariableNames();
+        if (this._value.getUsedVariableNames) {
+            varArray = varArray.concat(this._value.getUsedVariableNames());
+        } else if (this._value._name) {
+            varArray.push(this._value._name);
+        }
+        
+        return varArray
     }
 
     asText() {

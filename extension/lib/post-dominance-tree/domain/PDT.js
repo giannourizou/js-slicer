@@ -1,4 +1,4 @@
-class PDG {
+class PDT {
 
     constructor(nodes) {
         this._nodes = nodes;
@@ -12,20 +12,12 @@ class PDG {
         this._nodes = value;
     }
 
-    hasControlEdge(from, to) {
+    hasEdge(from, to) {
         let fromNode = this.getNodeById(from);
         if (!fromNode) {
             return false;
         }
-        return fromNode.hasControlEdgeTo(to);
-    }
-
-    hasDataEdge(from, to) {
-        let fromNode = this.getNodeById(from);
-        if (!fromNode) {
-            return false;
-        }
-        return fromNode.hasDataEdgeTo(to);
+        return fromNode.hasEdgeTo(to);
     }
 
     getNodeById(id) {
@@ -37,5 +29,18 @@ class PDG {
         }
     }
 
+    getImmediateDominantId(nodeId){
+        let pdtEdges = this.getAllEdges();
+        let foundEdge = pdtEdges.find(edge => edge._target === nodeId)
+        if(!foundEdge) return ;
+        return foundEdge._source;
+    }
+    
+    getAllEdges(){
+        return this._nodes.flatMap(node => {
+            return node._edges;
+        })
+    }
+
 }
-module.exports = PDG;
+module.exports = PDT;

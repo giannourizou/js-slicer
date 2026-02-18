@@ -338,6 +338,29 @@ it("should create an exit node for all returns", () => {
     expectHasEdge(cfg, 8, 9);
 });
 
+
+it("thesis-example", () => {
+    let code = `
+    function thesis_example(x){
+        let pos = x;        // 1
+        let found = false;   // 2
+        while (!found && pos >= 0){ // 3,4
+            if (pos === 1){   // 5
+                found = true; // 6
+            }
+            pos--; // 7
+        }
+        return found; // 8
+    }`;
+        
+    let functionObj = parse(code);
+    let cfg = CFGGenerator.generateCfg2(functionObj);
+    showCFG(cfg, "ThesisExample");
+
+    
+});
+
+
 /*
 it('should parse for statements', () => {
     let code = `

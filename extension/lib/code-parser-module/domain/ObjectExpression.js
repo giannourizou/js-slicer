@@ -1,6 +1,3 @@
-const Identifier = require("./Identifier");
-const Literal = require("./Literal");
-
 class ObjectExpression {
     constructor(properties) {
         this._properties = properties;

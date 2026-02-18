@@ -1,6 +1,3 @@
-const Identifier = require("./Identifier");
-const Literal = require("./Literal");
-
 class BinaryExpression {
     constructor(left, right, operator) {
         this._left = left;
@@ -34,21 +31,21 @@ class BinaryExpression {
 
     getUsedVariableNames() {
         let varArray = [];
-        if (this._left instanceof Identifier) {
+
+        if (this._left.getUsedVariableNames){
+            varArray = varArray.concat(this._left.getUsedVariableNames())
+        }else if (this._left._name){
             varArray.push(this._left._name);
-            //return varArray
-        } else if (!(this._left instanceof Identifier) && !(this._left instanceof Literal)) {
-            varArray = varArray.concat(this.left.getUsedVariableNames());
         }
 
-        if (this._right instanceof Identifier) {
+        if (this._right.getUsedVariableNames){
+            varArray = varArray.concat(this._right.getUsedVariableNames())
+        }else if (this._right._name){
             varArray.push(this._right._name);
-            // return varArray
-        } else if (!(this._right instanceof Identifier) && !(this._right instanceof Literal)) {
-            varArray = varArray.concat(this._right.getUsedVariableNames());
         }
 
         return varArray;
+
     }
 
     accept(visitor) {

@@ -1,6 +1,3 @@
-const Identifier = require("./Identifier");
-const Literal = require("./Literal");
-
 class FunctionCall {
     constructor(name, args) {
         this._name = name;
@@ -25,16 +22,36 @@ class FunctionCall {
 
     getUsedVariableNames() {
         let varArray = [];
+
+        if (this._name.getUsedVariableNames()) {
+            varArray = varArray.concat(this._name.getUsedVariableNames());
+        }
+
         for (let i in this._args) {
             let arg = this._args[i];
-
-            if (arg instanceof Identifier) {
-                varArray.push(arg._name);
-            } else if (!(arg instanceof Identifier) && !(arg instanceof Literal)) {
+            if (arg.getUsedVariableNames) {
                 varArray = varArray.concat(arg.getUsedVariableNames());
+            } else if (arg._name) {
+                varArray.push(arg._name);
             }
         }
+        
+        const builtInObjects = ['Object', 'Function', 'Boolean', 'Symbol', 'console', 'window', 'Math', 'Object', 'Array', 'String', 'RegExp', 'Number', 'Temporal', 'Map', 'Set', 'Date', 'JSON', 'fetch'];
+        varArray = varArray.filter( v => !(builtInObjects.includes(v)));
+
         return varArray;
+    }  
+
+
+    getDefinedVariable() {
+        // Handling mutating methods of arrays
+        if (this._name) {
+            let mutatingMethods = ['pop', 'push', 'reverse', 'shift', 'sort', 'splice', 'fill', 'unshift', 'copyWithin']
+            if (mutatingMethods.includes(this._name._property._name)) {
+                return [this._name._object._name]; 
+            }
+        }
+        return [];
     }
 
     accept(visitor) {

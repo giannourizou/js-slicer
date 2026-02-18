@@ -11,6 +11,16 @@ class NewExpression {
         return this._args;
     }
 
+    getUsedVariableNames(){
+        let varArray = [];
+        this.args.forEach((ar) => {
+            if (ar.getUsedVariableNames) {
+                varArray = varArray.concat(ar.getUsedVariableNames());
+            }
+        });
+        return varArray;
+    }
+
     asText() {
         let str = "";
         for (let arg of this._args) {

@@ -1,11 +1,12 @@
-const FDTNode = require("../../forward-dominance-tree/domain/FDTNode");
-const FDTEdge = require("../../forward-dominance-tree/domain/FDTEdge");
-const FDT = require("../../forward-dominance-tree/domain/FDT");
+const PDTNode = require("../../post-dominance-tree/domain/PDTNode");
+const PDTEdge = require("../../post-dominance-tree/domain/PDTEdge");
+const PDT = require("../../post-dominance-tree/domain/PDT");
 const Graph = require("../../utils/graphUtils");
-const AssignmentStatement = require("../../code-parser-module/domain/AssignmentStatement");
 const VariableDeclaration = require("../../code-parser-module/domain/VariableDeclaration");
 const DDGEdge = require("../../data-dependence-graph/domain/DDGEdge");
 const _ = require("lodash");
+
+
 class CFG {
     constructor(nodes) {
         if (nodes) {
@@ -54,6 +55,11 @@ class CFG {
         return node.isExitNode();
     }
 
+    getExitNode() {
+        return this._nodes.find(node => node.isExitNode());
+    }
+
+
     getNodeById(id) {
         let result = this.nodes.filter((n) => n.id === id);
         if (result) {
@@ -79,57 +85,46 @@ class CFG {
         this._nodes = value;
     }
 
-    getForwardDominanceTree() {
-        let fdtNodes = this._nodes.map((node) => {
-            return new FDTNode(node.id, null, node._statement, this.getFDTNodeEdges(node));
-        });
-        return new FDT(fdtNodes);
-    }
-
     getNodesImmediateDominators() {
         let immediateDomMap = {};
+        let exitNode = this.getExitNode();
         this._nodes.forEach((node) => {
-            let nodeDominants = [];
-            let remainingCFGNodes = this._nodes.filter((rNode) => rNode._id !== node._id);
-            remainingCFGNodes.forEach((rNode) => {
-                //Y forward dominates X if all paths from X include Y
-                let nodeTopology = this.getAllCFGPaths().filter((topology) => topology._source === node._id);
-                let allNodePathsFromX = nodeTopology.flatMap((t) => t._paths);
+            let pathsToExit = this.getPathsToNode(node._id, exitNode._id);
 
-                if (rNode.dominatesNode(allNodePathsFromX, node)) {
-                    nodeDominants.push(rNode);
+            // Formal Definition: A node X is post-dominated by a node Y in G if every directed path from X to EXIT (not including X) contains Y. 
+            let nodeDominants = [];
+            let rest = this._nodes.filter((n) => n._id !== node._id);
+            rest.forEach((node) => {
+                if (pathsToExit.every(path => path.includes(node._id))) {
+                    nodeDominants.push(node);
                 }
             });
 
-            let immediateNodeDominator = nodeDominants.find((nd) => {
-                let restDominants = nodeDominants.filter((elem) => elem._id !== nd._id);
-                return restDominants.every((rd) => {
-                    let nodeTopology = this.getAllCFGPaths().filter((topology) => topology._source === rd._id);
-                    let allNodePathsFromX = nodeTopology.flatMap((t) => t._paths);
-
-                    return rd.dominatesNode(allNodePathsFromX, nd);
+            // For each dominator (dom), 
+            // Check if all the rest dominators (rdom) appear after (>) dom on every path
+            let immediateDomNode = nodeDominants.find((dom) => {
+                let restDoms = nodeDominants.filter((n) => n._id !== dom._id);
+                return restDoms.every((rdom) => {
+                    return pathsToExit.every(path => {
+                        return path.indexOf(rdom._id) > path.indexOf(dom._id);
+                    });
                 });
             });
 
-            immediateDomMap[node._id] = immediateNodeDominator ? immediateNodeDominator._id : 0;
+            immediateDomMap[node._id] = immediateDomNode ? immediateDomNode._id : 0;
         });
-
+        immediateDomMap[exitNode._id] = 0;
         return immediateDomMap;
     }
-    getFDTNodeEdges(cfgNode) {
-        let dominatorsMap = this.getNodesImmediateDominators();
 
-        let fdtEdges = [];
+    getPDTNodeEdges(node, dominatorsMap) {
+        let pdtEdges = [];
         for (const key in dominatorsMap) {
-            if (dominatorsMap[key] === cfgNode._id) {
-                fdtEdges.push(new FDTEdge(cfgNode.id, parseInt(key)));
+            if (dominatorsMap[key] === node._id) {
+                pdtEdges.push(new PDTEdge(node._id, parseInt(key)));
             }
         }
-        // let cfgNodes = this._nodes.filter(node => {
-        //     return node._edges.find(edge =>  edge._target === cfgNode.id);
-        // });
-
-        return fdtEdges; //cfgNodes.map(node =>   new FDTEdge(cfgNode.id,node.id));
+        return pdtEdges;
     }
 
     getAllEdges() {
@@ -141,55 +136,84 @@ class CFG {
     getAllCFGPaths() {
         return new Graph(this._nodes.length).getCFGPaths(this);
     }
-
+    
     getNodeById(id) {
         return this._nodes.find((node) => node._id === id);
+    }
+    
+    getPathsToNode(startID, exitID, visited = new Set()){
+        if (startID === exitID && visited.size > 0) return [[exitID]];
+        if (visited.has(startID)) return [];
+
+        let allPathsToNode = [];
+        let startNode = this.getNodeById(startID);
+        visited.add(startID);
+
+        startNode._edges.forEach((e) => {
+            let pathsToExit = this.getPathsToNode(e._targetId, exitID, new Set(visited));
+            pathsToExit.map((path) => {
+                allPathsToNode.push([startID].concat(path))
+            });
+        })
+        return allPathsToNode;
+    }
+
+    getTopologies() {
+        return this._nodes.flatMap((source) => 
+            this._nodes
+                .map((target) => {
+                    let paths = this.getPathsToNode(source._id, target._id);
+                    if (source._id === target._id) {
+                        paths = paths.filter(path => path.length > 1);
+                    }
+                    return {
+                        _source: source._id,
+                        _target: target._id,
+                        _paths: paths   
+                    };
+                })
+                .filter(topology => topology._paths.length > 0)
+            );
     }
 
     getDataDependencyEdgesForNode(fromNode) {
         let ddgEdges = [];
-        this.getAllCFGPaths()
+        this.getTopologies()
             .filter((topology) => topology._source === fromNode._id)
-            .forEach((topology) => {
+            .forEach((topology) => {       
+                let toNode = this.getNodeById(topology._target);
+                if (fromNode._id === toNode._id && 
+                    fromNode._statement instanceof VariableDeclaration) {
+                    return;
+                }         
                 this.getVariableDependency(fromNode, this.getNodeById(topology._target), topology._paths).forEach((vd) => {
                     //Add DDGEdge if it does not exist already
                     if (
                         !ddgEdges.some(
-                            (edge) => edge._source === fromNode._id && edge._target === topology._target && vd === edge._dependantVariable
+                            (edge) => edge._source === fromNode._id && edge._target === topology._target && vd === edge._dependantVariable 
                         )
                     ) {
-                        ddgEdges.push(new DDGEdge(fromNode._id, topology._target, vd));
+                        ddgEdges.push(new DDGEdge(fromNode._id, topology._target, vd.variable, vd.types));
                     }
                 });
-                // topology._paths.forEach(path => {
-                //     this.getVariableDependency(fromNode,this.getNodeById(topology._target),path).forEach(vd => {
-                //
-                //         //Add DDGEdge if it does not exist already
-                //         if(!ddgEdges.some(edge => edge._source === fromNode._id && edge._target === topology._target && vd === edge._dependantVariable)){
-                //             ddgEdges.push(new DDGEdge(fromNode._id, topology._target, vd))
-                //         }
-                //     })
-                // })
             });
         return ddgEdges;
     }
 
     getVariableDependency(fromNode, toNode, paths) {
-        let sourceNodeUsedVars = fromNode._statement.getUsedVariableNames();
-        let destNodeUsedVars = toNode._statement.getUsedVariableNames();
+        if (fromNode._statement == null || toNode._statement == null) return [];
 
-        let sourceNodeDeclaredVar =
-            fromNode._statement instanceof AssignmentStatement || fromNode._statement instanceof VariableDeclaration
-                ? fromNode._statement.getDefinedVariable()
-                : undefined;
-        let destNodeDeclaredVar =
-            toNode._statement instanceof AssignmentStatement || toNode._statement instanceof VariableDeclaration
-                ? toNode._statement.getDefinedVariable()
-                : undefined;
+        let sourceNodeUsedVars = typeof fromNode._statement.getUsedVariableNames === "function" ? 
+            fromNode._statement.getUsedVariableNames() : [];
+        let destNodeUsedVars = typeof toNode._statement.getUsedVariableNames === "function" ?
+            toNode._statement.getUsedVariableNames() : [];
 
-        let allVars = _.uniq(sourceNodeUsedVars.concat(destNodeUsedVars));
-        if (sourceNodeDeclaredVar) allVars = allVars.concat(sourceNodeDeclaredVar);
-        if (destNodeDeclaredVar) allVars = allVars.concat(destNodeDeclaredVar);
+        let sourceNodeDeclaredVar = typeof fromNode._statement.getDefinedVariable === "function" ?
+            fromNode._statement.getDefinedVariable() : [];
+        let destNodeDeclaredVar = typeof toNode._statement.getDefinedVariable === "function" ?
+            toNode._statement.getDefinedVariable() : [];
+
+        let allVars = _.uniq(sourceNodeUsedVars.concat(destNodeUsedVars, sourceNodeDeclaredVar, destNodeDeclaredVar));
 
         let variableDependencyList = [];
         /*
@@ -202,35 +226,103 @@ class CFG {
             //     • X contains a definition of v and Y a use of v;
             //     • X contains a use of v and Y a definition of v; or
             //     • X contains a definition of v and Y a definition of v.
-            //                 * */
+            //                 
+        */
+       
         for (let i in allVars) {
             let variable = allVars[i];
+            let types;
+
+            // Same name variable declaration, skip
+            if (toNode._statement instanceof VariableDeclaration 
+                && destNodeDeclaredVar?.includes(variable)) {
+                continue;
+            }
+
+            if(!this.refersToTheSameVariable(fromNode, toNode, variable)) continue;
+
             let nodesAreDataDependent = paths.some((path) => {
                 let remainingNodes = path
                     .filter((nodeId) => nodeId !== fromNode._id && nodeId !== toNode._id)
                     .map((nodeId) => this.getNodeById(nodeId));
                 let hasInterveningDefinition = remainingNodes.some((rNode) => {
-                    let rNodeDeclaredVar =
-                        rNode._statement instanceof AssignmentStatement || rNode._statement instanceof VariableDeclaration
-                            ? rNode._statement.getDefinedVariable()
-                            : undefined;
-                    return rNodeDeclaredVar && rNodeDeclaredVar.includes(variable);
+                    let rNodeDeclaredVar = typeof rNode._statement.getDefinedVariable === "function" ? rNode._statement.getDefinedVariable() : undefined;
+                    if (rNodeDeclaredVar && rNodeDeclaredVar.includes(variable)) {
+                        if (rNode._statement instanceof VariableDeclaration &&
+                            rNode._nesting > toNode._nesting) return false;
+                        return this.refersToTheSameVariable(fromNode, rNode, variable);
+                    }
+                    return false;
                 });
 
-                return (
-                    !hasInterveningDefinition &&
-                    ((sourceNodeDeclaredVar && sourceNodeDeclaredVar.includes(variable) && destNodeUsedVars.includes(variable)) ||
-                        (sourceNodeUsedVars.includes(variable) && destNodeDeclaredVar && destNodeDeclaredVar.includes(variable)) ||
-                        (sourceNodeDeclaredVar &&
-                            sourceNodeDeclaredVar.includes(variable) &&
-                            destNodeDeclaredVar &&
-                            destNodeDeclaredVar.includes(variable)))
-                );
-            });
-            if (nodesAreDataDependent) variableDependencyList.push(variable);
-        }
+                let hasInterveningUse = remainingNodes.some((rNode) => { 
+                    let rNodeUsedVars = typeof rNode._statement.getUsedVariableNames === "function" ? rNode._statement.getUsedVariableNames() : [];
+                    if (rNodeUsedVars.includes(variable)) {
+                        return this.refersToTheSameVariable(fromNode, rNode, variable);
+                    }
+                    return false;
+                });
 
+                if (hasInterveningDefinition) return false;
+
+                let def_use = sourceNodeDeclaredVar && sourceNodeDeclaredVar.includes(variable) && destNodeUsedVars.includes(variable);
+                let def_def = sourceNodeDeclaredVar && sourceNodeDeclaredVar.includes(variable) && destNodeDeclaredVar && destNodeDeclaredVar.includes(variable) && !(destNodeUsedVars.includes(variable)) && !hasInterveningUse;
+                let use_def = sourceNodeUsedVars.includes(variable) && destNodeDeclaredVar && destNodeDeclaredVar.includes(variable) && !(sourceNodeDeclaredVar.includes(variable));
+
+                types = [];
+                if (def_use) types.push("def-use");
+                if (def_def) types.push("def-def");
+                if (use_def) types.push("use-def");
+                
+                return (def_use || def_def || use_def);
+
+            });
+            if (nodesAreDataDependent) variableDependencyList.push({variable: variable, types: types});
+        }
         return variableDependencyList.length ? variableDependencyList : [];
     }
+
+
+    // Check if the closest declaration of variable to fromNode 
+    // is the same as the closest declaration of variable to toNode 
+    refersToTheSameVariable(fromNode, toNode, variable) {
+        let fromNodeDeclarations = this._nodes.filter(n =>
+            n._statement instanceof VariableDeclaration &&
+            n._statement.getDefinedVariable().includes(variable) &&
+            n.nesting <= fromNode.nesting &&
+            this.hasAccessToScope(fromNode, n._scope)
+        );
+    
+        let toNodeDeclarations = this._nodes.filter(n =>
+            n._statement instanceof VariableDeclaration &&
+            n._statement.getDefinedVariable().includes(variable) &&
+            n.nesting <= toNode.nesting &&
+            this.hasAccessToScope(toNode, n._scope) 
+        );
+
+        fromNodeDeclarations.sort((a, b) => b._scope - a._scope);
+        toNodeDeclarations.sort((a, b) => b._scope - a._scope);
+        return fromNodeDeclarations[0] === toNodeDeclarations[0];
+    }
+
+    // Check if node X's variables are accessible from node Y with scope targetScope
+    // Based on scope value, by traversing up the scope chain
+    hasAccessToScope(node, targetScope) {
+        let visited = new Set();
+        let curNode = node;
+        let curScope = node._scope;
+        while (curScope !== 0 && !visited.has(curNode._id)) {
+            if (curScope === targetScope) return true;
+            visited.add(curNode._id);
+            curScope = Math.min(...curNode._parents.map(p => p._scope));
+            if (curNode._parents.length > 0) {
+                curNode = curNode._parents.find(p => p._scope === curScope)
+            } else {
+                return false;
+            }
+        }
+        return false;
+    }
 }
+
 module.exports = CFG;

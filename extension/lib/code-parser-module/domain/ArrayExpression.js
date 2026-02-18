@@ -15,6 +15,23 @@ class ArrayExpression {
         visitor.visitArrayExpression(this);
     }
 
+    getUsedVariableNames() {
+        let varArray = [];
+        this._elements.forEach((e) => {
+            if (e.getUsedVariableNames) {
+                varArray = varArray.concat(e.getUsedVariableNames());
+            } else if (e._name) {
+                varArray.push(e._name);
+            }
+        });
+        return varArray;
+    }
+
+    getDefinedVariable() {
+        return []; 
+    }
+
+
     asText() {
         let str = "";
         for (let elem of this._elements) {

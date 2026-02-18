@@ -7,6 +7,10 @@ class ThrowStatement {
         return this._argument;
     }
 
+    getUsedVariableNames(){
+        return [this._argument._name];
+    }
+
     asText() {
         return `throw ${this._argument.asText()}`;
     }

@@ -15,6 +15,14 @@ class BreakStatement {
         visitor.visitBreakStatement(this);
     }
 
+    getUsedVariableNames() {
+        return [];  
+    }
+
+    getDefinedVariable() {
+        return []; 
+    }
+    
     asText() {
         return "break";
     }
