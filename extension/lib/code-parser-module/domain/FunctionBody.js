@@ -1,9 +1,7 @@
 class FunctionBody {
-
     constructor(body) {
         this._body = body;
     }
-
 
     get body() {
         return this._body;

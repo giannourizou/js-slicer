@@ -6,8 +6,8 @@ class ArrowFunctionExpression {
     }
 
     getUsedVariableNames(){
-        varArray = [];
-        paramNames = this._params.map(p => p._name);
+        let varArray = [];
+        let paramNames = this._params.map(p => p._name);
 
         if (this._body && typeof this._body.getUsedVariableNames === 'function') {
             varArray = varArray.concat(this._body.getUsedVariableNames());

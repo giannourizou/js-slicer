@@ -12,7 +12,7 @@ class ReturnStatement {
     }
 
     getUsedVariableNames() {
-        varArray = []
+        let varArray = []
 
         if (this._value.getUsedVariableNames){
             varArray = varArray.concat(this._value.getUsedVariableNames())
