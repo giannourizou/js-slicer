@@ -1,6 +1,6 @@
 const Parser = require("./code-parser-module/Parser");
 const CFGGenerator = require("./control-flow-graph/CFGGenerator");
-const FDTGenerator = require("./forward-dominance-tree/FDTGenerator");
+const PDTGenerator = require("./post-dominance-tree/PDTGenerator");
 const CDGGenerator = require("./control-dependency-graph/CDGGenerator");
 const DDGGenerator = require("./data-dependence-graph/DDGGenerator");
 const PDGGenerator = require("./program-dependence-graph/PDGGenerator");
@@ -40,11 +40,11 @@ class JsSlicer {
       //Generate the control flow graph
       let cfg = CFGGenerator.generateCfg(parsedFunc);
 
-      //Generate the forward dependence graph
-      let fdt = FDTGenerator.generateFDT(cfg);
+      //Generate the post dominance tree
+      let pdt = PDTGenerator.generatePDT(cfg);
 
-      //Generate control dependency graph from control flow graph and control dependence graph
-      let cdg = CDGGenerator.generateCDG(cfg, fdt);
+      //Generate control dependency graph from control flow graph and post dominance tree
+      let cdg = CDGGenerator.generateCDG(cfg, pdt);
 
       //Generate the data dependence graph
       let ddg = DDGGenerator.generateDDG(cfg);

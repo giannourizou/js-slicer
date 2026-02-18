@@ -14,9 +14,11 @@
         "program",
         "slicing",
         "PDG",
+        "CDG",
+        "DDG",
         "CFG"
     ],
-    "author": "A. Krikorian, V. Zafeiris, G. Rigos",
+    "author": "A. Krikorian, V. Zafeiris, G. Rigos, P. Giannou Rizou",
     "license": "MIT",
     "bugs": {
         "url": "https://github.com/softeng-aueb/js-slicer/issues"

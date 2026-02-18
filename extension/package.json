@@ -21,6 +21,18 @@
             {
                 "command": "js-slicer.generateCFG",
                 "title": "JS-Slicer CFG"
+            },
+            {
+                "command": "js-slicer.generateCDG",
+                "title": "JS-Slicer CDG"
+            },
+            {
+                "command": "js-slicer.generateDDG",
+                "title": "JS-Slicer DDG"
+            },
+            {
+                "command": "js-slicer.generatePDG",
+                "title": "JS-Slicer PDG"
             }
         ],
         "menus": {
@@ -28,7 +40,22 @@
                 {
                     "when": "resourceLangId == javascript",
                     "command": "js-slicer.generateCFG",
-                    "group": "navigation"
+                    "group": "navigation@1"
+                },
+                {
+                    "when": "resourceLangId == javascript",
+                    "command": "js-slicer.generateCDG",
+                    "group": "navigation@2"
+                },
+                {
+                    "when": "resourceLangId == javascript",
+                    "command": "js-slicer.generateDDG",
+                    "group": "navigation@3"
+                },
+                {
+                    "when": "resourceLangId == javascript",
+                    "command": "js-slicer.generatePDG",
+                    "group": "navigation@4"
                 }
             ]
         }
