@@ -1,7 +1,7 @@
 # js-slicer
 
-The project aspires to create a library for construction of common program analysis structures (e.g. CFG, PDG),
-as well as extensions for slicing of JS functions. Current version is under maintenance, involving refactoring of the CFG construction subsystem and providing simple utilities for visualization of generated graphs with the help of the GraphViz library.
+The project aspires to create a library for construction of common program analysis structures (e.g. CFG, PDG), as well as extensions for slicing of JS functions. 
+Current version is under maintenance, involving refactoring of the CFG construction subsystem, construction of the PDT, CDG, DDG and PDG graphs and providing simple utilities for visualization of generated graphs with the help of the GraphViz library.
 
 ## Installation
 
@@ -18,12 +18,14 @@ Then install it in VS Code:
 ## How to use
 
 -   Open any JavaScript file.
--   You will find a **JS-Slicer CFG** button on the right of the top menu.
--   Alternatively, hover over any supported JavaScript function and select  
-    **Generate CFG for (function name)** from the context menu.
+-   You will find four **JS-Slicer** buttons on the right of the top menu.
+-   Specifically: **JS-Slicer CFG**, **JS-Slicer CDG**, **JS-Slicer DDG** and **JS-Slicer PDG**.
+-   Alternatively, hover over any supported JavaScript function and select one of the options
+    **Generate CFG/CDG/DDG/PDG for (function name)** from the context menu.
 
-Both methods will open a new tab with the CFG result of the selected function.
+Both methods will open a new tab with the chosen graph of the selected function.
 
 ## Known Issues
 
 -   Optional Chaining Operator and Nullish Coalescing Operator is not supported by recast in which the project depends on.
+-   Current PDT, CDG, DDG and PDG implementations operate at statement-level rather than Basic-Blocks level.
