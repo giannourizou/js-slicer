@@ -2,7 +2,7 @@
 
 This project is a library for construction and visualization of common program analysis graphs for JavaScript functions.
 
-##Features
+## Features
 
 - Abstract Syntax Tree (AST) parsing
 - Control Flow Graph (CFG) construction
