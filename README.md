@@ -1,7 +1,16 @@
 # js-slicer
 
-The project aspires to create a library for construction of common program analysis structures (e.g. CFG, PDG), as well as extensions for slicing of JS functions. 
-Current version is under maintenance, involving refactoring of the CFG construction subsystem, construction of the PDT, CDG, DDG and PDG graphs and providing simple utilities for visualization of generated graphs with the help of the GraphViz library.
+This project is a library for construction and visualization of common program analysis graphs for JavaScript functions.
+
+##Features
+
+- Abstract Syntax Tree (AST) parsing
+- Control Flow Graph (CFG) construction
+- Post-Dominator Tree (PDT) construction
+- Control Dependence Graph (CDG) construction
+- Data Dependence Graph (DDG) construction
+- Program Dependence Graph (PDG) construction
+- Interactive Graph Visualization via GraphViz/Viz.js inside VS Code
 
 ## Installation
 
@@ -24,6 +33,11 @@ Then install it in VS Code:
     **Generate CFG/CDG/DDG/PDG for (function name)** from the context menu.
 
 Both methods will open a new tab with the chosen graph of the selected function.
+
+##Project History & Contributions
+
+The AST and CFG subsystems were developed by Gasparis Rigos, Vassilis Zafeiris and Arman Krikorian. 
+The PDT, CDG, DDG and PDG construction and visualization components were developed as part of my BSc Thesis at Athens University of Economics and Business: ["Construction and Visualization of Program Dependence Graphs from JavaScript Source Code."](https://pyxida.aueb.gr/files/bcc7f422-530a-4a8c-86b6-f4782d04409e/download/Giannou-Rizou_2026.pdf)
 
 ## Known Issues
 
