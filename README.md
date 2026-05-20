@@ -34,7 +34,7 @@ Then install it in VS Code:
 
 Both methods will open a new tab with the chosen graph of the selected function.
 
-##Project History & Contributions
+## Project History & Contributions
 
 The AST and CFG subsystems were developed by Gasparis Rigos, Vassilis Zafeiris and Arman Krikorian. 
 The PDT, CDG, DDG and PDG construction and visualization components were developed as part of my BSc Thesis at Athens University of Economics and Business: ["Construction and Visualization of Program Dependence Graphs from JavaScript Source Code."](https://pyxida.aueb.gr/files/bcc7f422-530a-4a8c-86b6-f4782d04409e/download/Giannou-Rizou_2026.pdf)
